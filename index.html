@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>مولّد الأبحاث الجامعية</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --ink:#1b2430; --muted:#5d6b7a; --line:#dde3ea; --bg:#f5f7fa; --card:#fff; --accent:#1f5fbf; --accent-d:#174a96; --danger:#b3261e; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font-family:'Cairo',Tahoma,Arial,sans-serif; line-height:1.7; }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 80px; }
+  h1 { font-size:26px; margin:8px 0 4px; }
+  .sub { color:var(--muted); margin:0 0 24px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:20px; margin-bottom:16px; }
+  .card h2 { font-size:18px; margin:0 0 14px; }
+  label { display:block; font-weight:600; margin:12px 0 4px; font-size:14px; }
+  input, textarea, select { width:100%; font:inherit; padding:10px 12px; border:1px solid var(--line); border-radius:10px; background:#fff; color:var(--ink); }
+  input:focus, textarea:focus { outline:2px solid var(--accent); outline-offset:-1px; }
+  textarea { min-height:180px; resize:vertical; line-height:1.9; }
+  .row { display:flex; gap:12px; } .row > div { flex:1; }
+  button { font:inherit; font-weight:600; border:0; border-radius:10px; padding:10px 18px; cursor:pointer; background:var(--accent); color:#fff; }
+  button:hover { background:var(--accent-d); }
+  button:disabled { opacity:.5; cursor:not-allowed; }
+  button.ghost { background:#fff; color:var(--ink); border:1px solid var(--line); }
+  button.ghost:hover { background:#f0f3f7; }
+  .actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; }
+  .sec-row { display:flex; gap:8px; margin-bottom:8px; }
+  .sec-row input { flex:1; }
+  .sec-row button { padding:8px 12px; }
+  .status { font-size:13px; color:var(--muted); margin:4px 0 8px; }
+  .err { background:#fdecea; color:var(--danger); border:1px solid #f5c6c2; padding:10px 14px; border-radius:10px; margin-bottom:16px; display:none; }
+  .hidden { display:none; }
+  .note { font-size:13px; color:var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <h1>مولّد الأبحاث الجامعية</h1>
+  <p class="sub">أدخل العنوان، راجع الخطة، ثم ولّد الأقسام وصدّرها بصيغة Word.</p>
+  <div id="err" class="err" role="alert"></div>
+
+  <section class="card" id="step1">
+    <h2>١. بيانات البحث</h2>
+    <label for="title">عنوان البحث</label>
+    <input id="title" maxlength="200" placeholder="مثال: الطبيعة القانونية للشركة ذات المسؤولية المحدودة في القانون الجزائري">
+    <div class="row">
+      <div><label for="field">التخصص</label><input id="field" maxlength="100" placeholder="القانون التجاري"></div>
+      <div><label for="pages">عدد الصفحات التقريبي</label><input id="pages" type="number" min="4" max="60" value="10"></div>
+    </div>
+    <div class="actions"><button id="btnOutline">توليد خطة البحث</button></div>
+  </section>
+
+  <section class="card hidden" id="step2">
+    <h2>٢. خطة البحث (قابلة للتعديل)</h2>
+    <div id="outline"></div>
+    <div class="actions">
+      <button class="ghost" id="btnAdd">إضافة قسم</button>
+      <button id="btnSections">توليد الأقسام</button>
+    </div>
+  </section>
+
+  <section class="card hidden" id="step3">
+    <h2>٣. النص</h2>
+    <div id="progress" class="status"></div>
+    <div id="sections"></div>
+    <p class="note">النص مولَّد بالذكاء الاصطناعي وقد يحتوي أخطاءً. راجعه وتحقق من كل مادة قانونية ومرجع قبل الاعتماد عليه.</p>
+    <div class="actions"><button id="btnExport" disabled>تصدير Word</button></div>
+  </section>
+</main>
+
+<script>
+const $ = s => document.querySelector(s);
+let outline = [];   // [{title, summary}]
+let bodies = [];    // نصوص الأقسام
+
+function showError(msg) { const e = $('#err'); e.textContent = msg; e.style.display = msg ? 'block' : 'none'; if (msg) window.scrollTo({ top: 0, behavior: 'smooth' }); }
+
+async function post(path, payload) {
+  const r = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+  if (!r.ok) {
+    let m = 'حدث خطأ.'; try { m = (await r.json()).error || m; } catch {}
+    throw new Error(m);
+  }
+  return r;
+}
+const meta = () => ({ title: $('#title').value.trim(), field: $('#field').value.trim(), pages: $('#pages').value });
+
+function renderOutline() {
+  const box = $('#outline'); box.replaceChildren();
+  outline.forEach((s, i) => {
+    const row = document.createElement('div'); row.className = 'sec-row';
+    const inp = document.createElement('input'); inp.value = s.title; inp.maxLength = 150;
+    inp.addEventListener('input', () => { outline[i].title = inp.value; });
+    const del = document.createElement('button'); del.className = 'ghost'; del.textContent = 'حذف';
+    del.addEventListener('click', () => { outline.splice(i, 1); renderOutline(); });
+    row.append(inp, del); box.append(row);
+  });
+}
+
+$('#btnOutline').addEventListener('click', async () => {
+  showError('');
+  const m = meta();
+  if (!m.title) return showError('أدخل عنوان البحث.');
+  const b = $('#btnOutline'); b.disabled = true; b.textContent = 'جارٍ التوليد…';
+  try {
+    outline = (await (await post('/api/outline', m)).json()).sections;
+    renderOutline(); $('#step2').classList.remove('hidden');
+    $('#step3').classList.add('hidden');
+  } catch (e) { showError(e.message); }
+  b.disabled = false; b.textContent = 'توليد خطة البحث';
+});
+
+$('#btnAdd').addEventListener('click', () => { outline.push({ title: '', summary: '' }); renderOutline(); });
+
+$('#btnSections').addEventListener('click', async () => {
+  showError('');
+  outline = outline.filter(s => s.title.trim());
+  if (outline.length < 2) return showError('أبقِ قسمين على الأقل.');
+  const b = $('#btnSections'); b.disabled = true;
+  $('#step3').classList.remove('hidden'); $('#btnExport').disabled = true;
+  const box = $('#sections'); box.replaceChildren();
+  bodies = outline.map(() => '');
+  const areas = outline.map((s, i) => {
+    const h = document.createElement('label'); h.textContent = s.title;
+    const t = document.createElement('textarea'); t.placeholder = 'في الانتظار…';
+    t.addEventListener('input', () => { bodies[i] = t.value; });
+    box.append(h, t); return t;
+  });
+  const titles = outline.map(s => s.title);
+  try {
+    for (let i = 0; i < outline.length; i++) {
+      $('#progress').textContent = `جارٍ كتابة القسم ${i + 1} من ${outline.length}…`;
+      const r = await (await post('/api/section', { ...meta(), section: outline[i], outline: titles })).json();
+      bodies[i] = r.text; areas[i].value = r.text;
+    }
+    $('#progress').textContent = 'اكتمل التوليد. يمكنك تعديل أي نص قبل التصدير.';
+  } catch (e) {
+    showError(e.message + ' (الأقسام المكتملة محفوظة، يمكنك إعادة الضغط للمتابعة من البداية.)');
+    $('#progress').textContent = '';
+  }
+  $('#btnExport').disabled = !bodies.some(Boolean);
+  b.disabled = false;
+});
+
+$('#btnExport').addEventListener('click', async () => {
+  showError('');
+  const sections = outline.map((s, i) => ({ title: s.title, body: bodies[i] })).filter(s => s.body);
+  try {
+    const r = await post('/api/export', { ...meta(), sections });
+    const url = URL.createObjectURL(await r.blob());
+    const a = document.createElement('a'); a.href = url; a.download = 'research.docx'; a.click();
+    URL.revokeObjectURL(url);
+  } catch (e) { showError(e.message); }
+});
+</script>
+</body>
+</html>
