@@ -57,22 +57,66 @@ const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
 const clean = (s, max) => String(s || '').replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, max);
 
 // ---------- المسارات ----------
+const ORD = ['الأول', 'الثاني'];
+
+// يحوّل الخطة الثنائية (مبحثان، لكل مبحث مطلبان، ولكل مطلب فرعان) إلى قائمة مسطّحة مرتّبة
+function buildBinary(p) {
+  const mabahith = (Array.isArray(p.mabahith) ? p.mabahith : []).slice(0, 2);
+  if (mabahith.length < 2) return null;
+  const out = [{ kind: 'intro', label: '', title: 'مقدمة', summary: clean(p.introduction, 300) }];
+  for (let i = 0; i < 2; i++) {
+    const m = mabahith[i] || {};
+    const matalib = (Array.isArray(m.matalib) ? m.matalib : []).slice(0, 2);
+    if (!clean(m.title, 150) || matalib.length < 2) return null;
+    out.push({ kind: 'mabhath', label: `المبحث ${ORD[i]}`, title: clean(m.title, 150), summary: clean(m.summary, 300) });
+    for (let j = 0; j < 2; j++) {
+      const t = matalib[j] || {};
+      const furu = (Array.isArray(t.furu) ? t.furu : []).slice(0, 2);
+      if (!clean(t.title, 150) || furu.length < 2) return null;
+      out.push({ kind: 'matlab', label: `المطلب ${ORD[j]}`, title: clean(t.title, 150), summary: '' });
+      for (let k = 0; k < 2; k++) {
+        const f = furu[k] || {};
+        if (!clean(f.title, 150)) return null;
+        out.push({ kind: 'far3', label: `الفرع ${ORD[k]}`, title: clean(f.title, 150), summary: clean(f.summary, 300) });
+      }
+    }
+  }
+  out.push({ kind: 'conclusion', label: '', title: 'خاتمة', summary: clean(p.conclusion, 300) });
+  return out;
+}
+
+function parseJson(raw) {
+  try { return JSON.parse(raw.replace(/^```json|```$/g, '').trim()); }
+  catch { throw Object.assign(new Error('تعذّر فهم خطة البحث، أعد المحاولة.'), { status: 502 }); }
+}
+
 async function outline(body) {
   const title = clean(body.title, 200);
   const field = clean(body.field, 100) || 'العلوم الجامعية';
   const pages = clamp(parseInt(body.pages, 10) || 10, 4, 60);
+  const plan = body.plan === 'flat' ? 'flat' : 'binary';
   if (!title) throw Object.assign(new Error('أدخل عنوان البحث.'), { status: 400 });
+
+  if (plan === 'binary') {
+    const prompt = `أنت أستاذ جامعي متخصص في ${field}. ضع خطة بحث جامعي ثنائية (الخطة الثنائية المعتمدة في الجامعات الجزائرية) بعنوان: "${title}".
+عدد الصفحات المطلوب تقريبًا: ${pages}.
+هيكل الخطة: مقدمة، ثم مبحثان، لكل مبحث مطلبان، ولكل مطلب فرعان، ثم خاتمة.
+أعد JSON فقط بهذا الشكل بالضبط:
+{"introduction":"جملة عن محتوى المقدمة","mabahith":[{"title":"...","summary":"جملة واحدة","matalib":[{"title":"...","furu":[{"title":"...","summary":"جملة واحدة"},{"title":"...","summary":"جملة واحدة"}]},{"title":"...","furu":[{"title":"...","summary":"..."},{"title":"...","summary":"..."}]}]},{"title":"...","summary":"...","matalib":[...]}],"conclusion":"جملة عن محتوى الخاتمة"}
+الشروط: مبحثان بالضبط، ولكل مبحث مطلبان بالضبط، ولكل مطلب فرعان بالضبط؛ عناوين عربية واضحة ومترابطة منطقيًا، والمبحث الثاني يكمّل الأول؛ بلا ترقيم ولا كلمات «المبحث» أو «المطلب» أو «الفرع» داخل العناوين.`;
+    const sections = buildBinary(parseJson(await callGemini(prompt, { json: true })));
+    if (!sections) throw Object.assign(new Error('خطة غير مكتملة، أعد المحاولة.'), { status: 502 });
+    return { sections };
+  }
+
   const n = clamp(Math.round(pages / 4), 2, 8);
   const prompt = `أنت أستاذ جامعي متخصص في ${field}. ضع خطة بحث جامعي بعنوان: "${title}".
 عدد الصفحات المطلوب تقريبًا: ${pages}.
 أعد JSON فقط بهذا الشكل: {"sections":[{"title":"...","summary":"جملة واحدة عن محتوى القسم"}]}
 الشروط: تبدأ الخطة بـ "مقدمة" وتنتهي بـ "خاتمة"، وبينهما ${n} مباحث مرتبة منطقيًا، بعناوين عربية واضحة بلا ترقيم.`;
-  const raw = await callGemini(prompt, { json: true });
-  let parsed;
-  try { parsed = JSON.parse(raw.replace(/^```json|```$/g, '').trim()); }
-  catch { throw Object.assign(new Error('تعذّر فهم خطة البحث، أعد المحاولة.'), { status: 502 }); }
+  const parsed = parseJson(await callGemini(prompt, { json: true }));
   const sections = (parsed.sections || [])
-    .map(s => ({ title: clean(s.title, 150), summary: clean(s.summary, 300) }))
+    .map(s => ({ kind: 'section', label: '', title: clean(s.title, 150), summary: clean(s.summary, 300) }))
     .filter(s => s.title).slice(0, 14);
   if (sections.length < 3) throw Object.assign(new Error('خطة غير مكتملة، أعد المحاولة.'), { status: 502 });
   return { sections };
@@ -83,12 +127,24 @@ async function section(body) {
   const field = clean(body.field, 100) || 'العلوم الجامعية';
   const pages = clamp(parseInt(body.pages, 10) || 10, 4, 60);
   const sec = body.section || {};
-  const titles = (Array.isArray(body.outline) ? body.outline : []).map(t => clean(t, 150)).slice(0, 14);
-  if (!title || !clean(sec.title, 150)) throw Object.assign(new Error('بيانات ناقصة.'), { status: 400 });
-  const words = clamp(Math.round((pages * 250) / Math.max(titles.length, 3)), 150, 900);
-  const prompt = `اكتب قسم "${clean(sec.title, 150)}" من بحث جامعي بعنوان "${title}" في تخصص ${field}.
-خطة البحث الكاملة: ${titles.join(' | ')}
-ملخص هذا القسم: ${clean(sec.summary, 300)}
+  const secTitle = clean(sec.title, 150);
+  const label = clean(sec.label, 40);
+  const kind = ['intro', 'conclusion', 'far3'].includes(sec.kind) ? sec.kind : 'section';
+  const parents = (Array.isArray(sec.parents) ? sec.parents : []).map(p => clean(p, 200)).filter(Boolean).slice(0, 2);
+  const titles = (Array.isArray(body.outline) ? body.outline : []).map(t => clean(t, 200)).slice(0, 30);
+  if (!title || !secTitle) throw Object.assign(new Error('بيانات ناقصة.'), { status: 400 });
+  const units = clamp(parseInt(body.units, 10) || titles.length, 1, 30);
+  const words = clamp(Math.round((pages * 250) / Math.max(units, 3)), 150, 900);
+  const heading = label ? `${label}: ${secTitle}` : secTitle;
+  const where = parents.length ? `\nموقعه في الخطة: ${parents.join(' ← ')}` : '';
+  const extra = kind === 'intro'
+    ? '\nتتضمن المقدمة: تمهيدًا للموضوع، وأهميته، وإشكالية البحث، والمنهج المتبع، ثم الإعلان عن خطة البحث.'
+    : kind === 'conclusion'
+      ? '\nتتضمن الخاتمة: خلاصة ما توصل إليه البحث، ثم أبرز النتائج والتوصيات.'
+      : '';
+  const prompt = `اكتب قسم "${heading}" من بحث جامعي بعنوان "${title}" في تخصص ${field}.
+خطة البحث الكاملة: ${titles.join(' | ')}${where}
+ملخص هذا القسم: ${clean(sec.summary, 300)}${extra}
 الطول المطلوب: نحو ${words} كلمة.
 القواعد: لغة عربية أكاديمية رصينة؛ فقرات متصلة؛ لا تستخدم رموز Markdown؛ لا تخترع مراجع أو أرقام مواد قانونية أو أحكامًا قضائية أو إحصاءات؛ وإن احتجت إلى استشهاد فاكتفِ بإشارة عامة وضع بعدها [يُراجَع المصدر].
 اكتب نص القسم فقط دون عنوانه.`;
@@ -131,20 +187,50 @@ function bodyParagraphs(text) {
 async function exportDocx(body) {
   const title = clean(body.title, 200) || 'بحث جامعي';
   const field = clean(body.field, 100);
-  const secs = (Array.isArray(body.sections) ? body.sections : []).slice(0, 20)
-    .map(s => ({ title: clean(s.title, 150), body: String(s.body || '').slice(0, 30000) }))
+  const KINDS = ['section', 'intro', 'conclusion', 'mabhath', 'matlab', 'far3'];
+  const secs = (Array.isArray(body.sections) ? body.sections : []).slice(0, 40)
+    .map(s => ({
+      title: clean(s.title, 150), label: clean(s.label, 40),
+      kind: KINDS.includes(s.kind) ? s.kind : 'section',
+      body: String(s.body || '').slice(0, 30000),
+    }))
     .filter(s => s.title);
   if (!secs.length) throw Object.assign(new Error('لا توجد أقسام للتصدير.'), { status: 400 });
 
+  const univ = clean(body.university, 120);
+  const faculty = clean(body.faculty, 120), dept = clean(body.department, 120);
+  const student = clean(body.student, 100), supervisor = clean(body.supervisor, 100), year = clean(body.year, 30);
+  const centered = (text, o = {}) => para([run(text, { size: o.size || 28, bold: !!o.bold, color: o.color })], {
+    alignment: AlignmentType.CENTER, after: o.after ?? 120,
+  });
+  const prefixed = (word, v) => (v.startsWith(word) ? v : `${word} ${v}`);
   const cover = [
-    para([run('')], { after: 2400 }),
-    para([run(title, { size: 44, bold: true, color: '1F3864' })], { alignment: AlignmentType.CENTER, after: 400 }),
-    ...(field ? [para([run(field, { size: 30 })], { alignment: AlignmentType.CENTER })] : []),
+    ...(univ ? [
+      centered('الجمهورية الجزائرية الديمقراطية الشعبية', { bold: true }),
+      centered('وزارة التعليم العالي والبحث العلمي', { bold: true, after: 240 }),
+      centered(univ, { bold: true, size: 30 }),
+      ...(faculty ? [centered(prefixed('كلية', faculty))] : []),
+      ...(dept ? [centered(prefixed('قسم', dept))] : []),
+    ] : []),
+    para([run('')], { after: univ ? 1600 : 2400 }),
+    centered(title, { size: 44, bold: true, color: '1F3864', after: 400 }),
+    ...(field ? [centered(field, { size: 30, after: 1600 })] : []),
+    ...(student ? [centered(`من إعداد الطالب: ${student}`, { after: 160 })] : []),
+    ...(supervisor ? [centered(`تحت إشراف: ${supervisor}`, { after: 160 })] : []),
+    ...(year ? [centered(`السنة الجامعية: ${year}`, { after: 160 })] : []),
   ];
   const content = [];
+  const LEVEL = {
+    mabhath: [HeadingLevel.HEADING_1, 34],
+    matlab: [HeadingLevel.HEADING_2, 30],
+    far3: [HeadingLevel.HEADING_3, 28],
+  };
   secs.forEach((s, i) => {
-    content.push(para([run(s.title, { size: 34, bold: true, color: '1F3864' })], {
-      heading: HeadingLevel.HEADING_1, pageBreakBefore: i === 0, after: 240,
+    const [heading, size] = LEVEL[s.kind] || [HeadingLevel.HEADING_1, 34];
+    const text = s.label ? `${s.label}: ${s.title}` : s.title;
+    content.push(para([run(text, { size, bold: true, color: '1F3864' })], {
+      heading, after: s.kind === 'far3' ? 160 : 240,
+      pageBreakBefore: i === 0 || s.kind === 'mabhath' || s.kind === 'conclusion',
     }));
     content.push(...bodyParagraphs(s.body));
   });
