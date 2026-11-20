@@ -71,6 +71,17 @@ http.createServer(async (req, res) => {
       }
       return send(res, 404, { error: 'not found' });
     }
+    // ---- محركات البحث: ملف تحقق Google (googleXXXX.html) و robots.txt و sitemap.xml ----
+    if (req.method === 'GET' && /^\/google[0-9a-f]+\.html$/.test(url.pathname)) {
+      const f = path.join(__dirname, path.basename(url.pathname));
+      if (fs.existsSync(f)) { res.writeHead(200, { 'Content-Type': MIME['.html'] }); return fs.createReadStream(f).pipe(res); }
+    }
+    if (req.method === 'GET' && (url.pathname === '/robots.txt' || url.pathname === '/sitemap.xml')) {
+      const base = `${req.headers['x-forwarded-proto'] || 'https'}://${req.headers['x-forwarded-host'] || req.headers.host}`;
+      if (url.pathname === '/robots.txt') { res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' }); return res.end(`User-agent: *\nAllow: /\nDisallow: /api/\nSitemap: ${base}/sitemap.xml\n`); }
+      res.writeHead(200, { 'Content-Type': 'application/xml; charset=utf-8' });
+      return res.end(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>${base}/</loc></url></urlset>\n`);
+    }
     if (url.pathname === '/' || url.pathname === '/index.html') {
       res.writeHead(200, { 'Content-Type': MIME['.html'] });
       return fs.createReadStream(path.join(__dirname, 'index.html')).pipe(res);
