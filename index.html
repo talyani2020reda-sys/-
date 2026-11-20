@@ -15,7 +15,8 @@
   --sh-1:0 1px 2px rgba(8,36,29,.06),0 2px 8px rgba(8,36,29,.05);
   --sh-2:0 2px 4px rgba(8,36,29,.05),0 14px 34px rgba(8,36,29,.10);
   --ui:'Cairo','Segoe UI',Tahoma,'Noto Sans Arabic','Geeza Pro',system-ui,sans-serif;
-  --serif:'Amiri','Noto Naskh Arabic','Traditional Arabic','Times New Roman',serif;
+  --serif:'Traditional Arabic','Amiri','Noto Naskh Arabic','Times New Roman',serif;
+  --doc:'Traditional Arabic','Amiri','Noto Naskh Arabic',serif;
   --fs:16px; --lh:1.5;
 }
 *{box-sizing:border-box}
@@ -154,7 +155,7 @@ input[type=range]{padding:0;accent-color:var(--gold);height:46px;background:none
 .desk{display:flex;flex-direction:column;gap:26px;min-width:0;align-items:center}
 
 /* ---------- الأوراق ---------- */
-.paper{--frame-c:var(--navy);width:100%;max-width:860px;background:#fff;border-radius:4px;box-shadow:0 1px 3px rgba(8,36,29,.08),0 18px 44px rgba(8,36,29,.14);padding:56px 64px;position:relative;font-family:var(--serif);color:#111}
+.paper{--frame-c:var(--navy);width:100%;max-width:794px;background:#fff;border-radius:4px;box-shadow:0 1px 3px rgba(8,36,29,.08),0 18px 44px rgba(8,36,29,.14);padding:56px 64px;position:relative;font-family:var(--doc);color:#111}
 .paper.f-simple{outline:2px solid var(--frame-c);outline-offset:-18px}
 .paper.f-double{outline:5px double var(--frame-c);outline-offset:-20px}
 .paper.f-classic{outline:2px solid var(--frame-c);outline-offset:-18px;box-shadow:0 18px 44px rgba(8,36,29,.14),inset 0 0 0 22px #fff,inset 0 0 0 25px var(--frame-c)}
@@ -201,7 +202,7 @@ input[type=range]{padding:0;accent-color:var(--gold);height:46px;background:none
 /* ---------- الفهرس ---------- */
 .tocp h3{margin:0 0 22px;text-align:center;font-size:32px;color:var(--navy);padding-bottom:10px;border-bottom:4px double var(--gold);font-weight:700}
 .tocp ol{list-style:none;margin:0;padding:0}
-.tocp li{display:flex;gap:8px;align-items:baseline;font-size:20px;padding:4px 0}
+.tocp li{display:flex;gap:8px;align-items:baseline;font-size:calc(var(--fs)*1.3333);padding:4px 0}
 .tocp li::after{content:"";order:1;flex:1;border-bottom:2px dotted #c3cbc8;transform:translateY(-4px)}
 .tocp li span{order:0}
 .tocp li.l1{font-weight:700;margin-top:6px}
@@ -218,26 +219,26 @@ input[type=range]{padding:0;accent-color:var(--gold);height:46px;background:none
 .hd .tt:focus{background:#fff6dc;box-shadow:0 0 0 3px rgba(184,146,58,.3)}
 
 /* المستوى 1: مبحث / فصل */
-.l1 .hd{flex-direction:column;align-items:center;gap:8px;text-align:center;font-size:32px;margin:26px 0 14px;padding:22px 16px 18px;background:linear-gradient(180deg,var(--tint),#fff);border-top:3px solid var(--gold);border-bottom:1px solid var(--line);border-radius:6px}
+.l1 .hd{flex-direction:column;align-items:center;gap:8px;text-align:center;font-size:calc((var(--fs) + 4px)*1.3333);margin:26px 0 14px;padding:22px 16px 18px;background:linear-gradient(180deg,var(--tint),#fff);border-top:3px solid var(--gold);border-bottom:1px solid var(--line);border-radius:6px}
 .l1 .hd .tt{flex:0 1 auto;font-size:inherit}
 .l1 .hd .lb{background:var(--navy);padding:7px 22px;font-size:14px}
 .l1.intro .hd .lb,.l1.conclusion .hd .lb{display:none}
 .l1.intro .hd,.l1.conclusion .hd{padding:16px}
 
 /* المستوى 2: مطلب */
-.l2 .hd{font-size:26px;padding:10px 16px 10px 10px;margin-top:22px;background:linear-gradient(270deg,var(--tint) 0%,transparent 100%);border-inline-start:6px solid var(--gold);border-radius:0 10px 10px 0}
+.l2 .hd{font-size:calc((var(--fs) + 2px)*1.3333);padding:10px 16px 10px 10px;margin-top:22px;background:linear-gradient(270deg,var(--tint) 0%,transparent 100%);border-inline-start:6px solid var(--gold);border-radius:0 10px 10px 0}
 .l2 .hd .lb{background:var(--navy)}
 
 /* المستوى 3: فرع — بطاقة مؤطَّرة كاملة */
 .blk.l3{margin:20px 0 14px;padding:0;border:2.5px solid var(--navy);border-radius:14px;background:#fff;overflow:hidden;box-shadow:var(--sh-1)}
 .blk.l3:hover{background:#fff}
-.l3 .hd{font-size:22px;margin:0;padding:12px 18px;background:var(--tint);border-bottom:2px solid var(--navy);color:var(--navy)}
+.l3 .hd{font-size:calc((var(--fs) + 1px)*1.3333);margin:0;padding:12px 18px;background:var(--tint);border-bottom:2px solid var(--navy);color:var(--navy)}
 .l3 .hd .lb{background:transparent;color:var(--navy);border:2px solid var(--navy);padding:5px 13px}
 .l3 .body{margin:10px 14px 4px}
 .l3 .tools{margin:0 14px 12px}
 
 /* النص */
-.body{outline:none;min-height:2.4em;font-size:calc(var(--fs)*1.2);line-height:max(var(--lh),1.85);text-align:justify;padding:10px 14px;border-radius:10px;border:2px solid transparent;white-space:pre-wrap;color:#0b0f0d;word-spacing:.04em}
+.body{outline:none;min-height:2.4em;font-size:calc(var(--fs)*1.3333);line-height:calc(var(--lh)*1.2);text-align:justify;padding:10px 14px;border-radius:10px;border:2px solid transparent;white-space:pre-wrap;color:#0b0f0d;word-spacing:.04em}
 .body:hover{border-color:#e7e3d2;background:#fffefa}
 .body:focus{border-color:var(--gold);background:#fffdf5;box-shadow:0 0 0 4px rgba(184,146,58,.14)}
 .body:empty::before{content:attr(data-ph);color:#98a39f;font-family:var(--ui);font-size:15px}
@@ -285,6 +286,40 @@ input[type=range]{padding:0;accent-color:var(--gold);height:46px;background:none
   .hero{padding:36px 0 96px}
 }
 @media print{.top,.hero,.split,.bar,.nav,.tools,.foot{display:none!important}.paper{box-shadow:none}}
+
+.l3 .body[class*=tfb-]{border:2px solid transparent!important;background:transparent}
+.l3 .body[class*=tfb-]:focus{border-color:var(--gold)!important;background:#fffdf5!important}
+
+/* ---------- البحث عن المراجع ---------- */
+.refs-box{background:var(--tint-2);border:1.5px dashed #c9d8d2;border-radius:14px;padding:16px}
+.refs-bar{display:flex;gap:10px;flex-wrap:wrap}
+.refs-bar input{flex:1;min-width:200px}
+.refs-note{margin:10px 2px 0;font-size:12.5px;color:var(--muted)}
+.refs-res{display:flex;flex-direction:column;gap:10px;margin-top:14px;max-height:520px;overflow:auto;padding:2px}
+.ref{background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;gap:12px;align-items:flex-start;justify-content:space-between}
+.ref-t{font-weight:800;color:var(--brand);line-height:1.6;font-size:14.5px}
+.ref-m{font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.7}
+.ref-m a{color:var(--gold-d);font-weight:700}
+.ref-b{display:inline-block;font-size:11px;font-weight:800;padding:1px 9px;border-radius:99px;background:var(--gold-l);color:var(--gold-d);margin-inline-end:6px}
+.ref button{flex:none;white-space:nowrap}
+.ref.added{opacity:.55}
+.refs-msg{font-size:13.5px;color:var(--muted);padding:8px 4px}
+.refs-msg.err{color:#991b1b}
+
+/* ---------- تلخيص المحاضرات والمخطط الهرمي ---------- */
+#summarizer{margin-top:36px;scroll-margin-top:92px}
+.sum-in{display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:18px;align-items:start}
+.sum-side{display:flex;flex-direction:column;gap:14px}
+.sum-file{display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-height:46px}
+.sum-file .fname{font-size:13px;font-weight:700;color:var(--brand);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#sumRes{margin-top:26px;padding-top:22px;border-top:1px solid var(--line)}
+.sum-h{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.sum-h h3{margin:0;font-size:18px;color:var(--brand);font-weight:800}
+.sum-box{background:var(--tint-2);border:1.5px solid var(--line);border-radius:14px;padding:16px 20px;font-family:var(--doc);font-size:20px;line-height:1.9;white-space:pre-wrap;text-align:justify;color:#0b0f0d}
+.sum-note{margin:0 0 12px;padding:9px 14px;border-radius:10px;background:#fdf3d7;color:#8a5a00;font-size:13px;font-weight:700}
+.sum-map{margin-top:22px;border:1.5px solid var(--line);border-radius:14px;background:#fff;overflow:auto;padding:10px}
+.sum-map svg{display:block;margin:0 auto;height:auto;max-width:none}
+@media(max-width:860px){.sum-in{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -314,7 +349,7 @@ input[type=range]{padding:0;accent-color:var(--gold);height:46px;background:none
       <h1>من الغلاف إلى الخاتمة،<br><span>بحثك جاهز للتسليم</span></h1>
       <p class="lead">أدخل بيانات الغلاف وشاهدها تتشكّل أمامك فورًا على الإطار المزخرف، ثم ضع الخطة واكتب مباشرةً داخل العرض، وأطِّر نصوص المباحث والمطالب والفروع، وصدّر ملف Word مرتبًا.</p>
     </div>
-    <div class="chips"><span>✦ غلاف مزخرف</span><span>✎ كتابة مباشرة</span><span>▣ تأطير الفروع</span><span>W تصدير Word</span></div>
+    <div class="chips"><span>✦ غلاف مزخرف</span><span>✎ كتابة مباشرة</span><span>▣ تأطير الفروع</span><span><a href="#summarizer" style="color:inherit;text-decoration:none">✦ تلخيص المحاضرات</a></span><span>W تصدير Word</span></div>
   </div>
 </section>
 
@@ -379,6 +414,14 @@ input[type=range]{padding:0;accent-color:var(--gold);height:46px;background:none
             <input type="range" id="words" min="100" max="500" step="20" value="220"></label>
           <label class="f full"><span>قائمة المراجع <em>(اختياري — تكتبها بنفسك، فالمنصة لا تختلق مراجع)</em></span>
             <textarea id="refs" rows="3" placeholder="مرجع واحد في كل سطر"></textarea></label>
+          <div class="f full refs-box">
+            <div class="refs-bar">
+              <input id="refQ" placeholder="ابحث عن مراجع حقيقية: كتب ومقالات (الافتراضي عنوان بحثك)">
+              <button type="button" class="btn primary" id="btnRefs">🔎 البحث عن مراجع</button>
+            </div>
+            <p class="refs-note">النتائج من قواعد بيانات علمية مفتوحة (OpenAlex وCrossref وGoogle Books). لا تُختلق مراجع، لكن تحقّق من كل مرجع قبل اعتماده، وأضف بنفسك المراجع القانونية الجزائرية والنصوص التشريعية.</p>
+            <div id="refRes" class="refs-res" hidden></div>
+          </div>
         </div>
       </section>
 
@@ -459,6 +502,33 @@ input[type=range]{padding:0;accent-color:var(--gold);height:46px;background:none
     <div class="ws">
       <aside class="nav" id="nav"><h3>المحتويات</h3><ol id="navList"></ol></aside>
       <div class="desk" id="desk"></div>
+    </div>
+  </section>
+
+  <!-- ===== تلخيص المحاضرات ===== -->
+  <section id="summarizer" class="card">
+    <div class="card-h"><span class="num">✦</span><div><h2>تلخيص المحاضرات والمخطط الهرمي</h2><p>الصق نص المحاضرة أو ارفع ملفًا، فتحصل على ملخص ومخطط هرمي مرتّب للمراجعة.</p></div></div>
+    <div class="sum-in">
+      <label class="f"><span>نص المحاضرة</span>
+        <textarea id="sumText" rows="9" placeholder="الصق هنا نص المحاضرة أو ملاحظاتك…"></textarea></label>
+      <div class="sum-side">
+        <div class="f"><span>أو ارفع ملفًا <em>(txt أو PDF أو صورة، حتى 5 ميغابايت)</em></span>
+          <div class="sum-file">
+            <label class="btn sm" for="sumFile">اختيار ملف</label><input type="file" id="sumFile" accept=".txt,.pdf,image/png,image/jpeg,image/webp,text/plain,application/pdf" hidden>
+            <span class="fname" id="sumFname" hidden></span><button type="button" class="link" id="sumFileClear" hidden>إزالة</button>
+          </div></div>
+        <label class="f"><span>مستوى التفصيل</span>
+          <select id="sumDetail"><option value="short">مختصر</option><option value="normal" selected>متوسط</option><option value="detailed">مفصّل</option></select></label>
+        <button class="btn primary" id="btnSum" type="button">✦ لخّص وارسم المخطط</button>
+      </div>
+    </div>
+
+    <div id="sumRes" hidden>
+      <p class="sum-note" id="sumNote" hidden></p>
+      <div class="sum-h"><h3>الملخص</h3><button class="btn sm" id="sumCopy" type="button">نسخ الملخص</button></div>
+      <div class="sum-box" id="sumOut"></div>
+      <div class="sum-h" style="margin-top:24px"><h3>المخطط الهرمي</h3><button class="btn sm primary" id="sumPng" type="button">تحميل المخطط (PNG)</button></div>
+      <div class="sum-map" id="sumMap"></div>
     </div>
   </section>
 </main>
@@ -584,6 +654,7 @@ input[type=range]{padding:0;accent-color:var(--gold);height:46px;background:none
     const r = document.documentElement.style;
     r.setProperty('--brand', color); r.setProperty('--navy', color);
     r.setProperty('--fs', val('fontSize') + 'px'); r.setProperty('--lh', val('lineSpacing'));
+    const f = val('font'); r.setProperty('--doc', f === 'Arial' ? "Arial,'Noto Sans Arabic',sans-serif" : `'${f}','Amiri','Noto Naskh Arabic',serif`);
   }
 
   // ---------- العرض ----------
@@ -635,7 +706,10 @@ input[type=range]{padding:0;accent-color:var(--gold);height:46px;background:none
 
   // ---------- الذكاء الاصطناعي ----------
   async function genNode(n, i) {
-    const r = await api('write', { title: val('title'), heading: (n.label ? n.label + ': ' : '') + n.title, parents: parentsOf(i), words: +val('words') * (n.type === 'intro' || n.type === 'conclusion' ? 1.2 : 1) });
+    const outline = nodes.map((x) => '  '.repeat(x.level - 1) + '- ' + (x.label ? x.label + ': ' : '') + x.title).join('\n');
+    let prev = ''; for (let j = i - 1; j >= 0; j--) if (nodes[j].body) { prev = nodes[j].body; break; }
+    const r = await api('write', { title: val('title'), field: val('subject'), heading: (n.label ? n.label + ': ' : '') + n.title, parents: parentsOf(i),
+      type: n.type === 'free' ? 'sub' : n.type, outline, prev, words: +val('words') * (n.type === 'intro' || n.type === 'conclusion' ? 1.2 : 1) });
     n.body = (await r.json()).text;
   }
   const setBusy = (id, on) => { const b = $(`.blk[data-id="${id}"]`); if (b) { b.classList.toggle('busy', on); $$('button', b).forEach((x) => (x.disabled = on)); } };
@@ -764,6 +838,170 @@ input[type=range]{padding:0;accent-color:var(--gold);height:46px;background:none
     img.onerror = () => toast('تعذّر قراءة الصورة.', true); img.src = url;
   };
   $('#logoClear').onclick = () => { logo = ''; $('#logoFile').value = ''; refresh(); };
+
+
+  // ---------- البحث عن مراجع ----------
+  let refItems = [];
+  async function searchRefs() {
+    const q = val('refQ') || val('title'); const box = $('#refRes');
+    if (q.length < 3) { toast('اكتب كلمات البحث أو عنوان البحث أولًا.', true); return; }
+    $('#refQ').value = q; box.hidden = false; box.innerHTML = '<div class="refs-msg">جارٍ البحث في قواعد البيانات…</div>';
+    const b = $('#btnRefs'); b.disabled = true;
+    try {
+      let r; try { r = await fetch('/api/refs?q=' + encodeURIComponent(q)); } catch (e) { throw new Error('الخادم غير متصل. شغّله بالأمر node server.js'); }
+      if (!r.ok) throw new Error('تعذّر البحث الآن.');
+      const j = await r.json(); refItems = j.items || [];
+      const failed = (j.errors || []).length;
+      if (!refItems.length) { box.innerHTML = `<div class="refs-msg ${failed ? 'err' : ''}">${failed ? 'تعذّر الوصول إلى قواعد البيانات الآن. أعد المحاولة بعد قليل.' : 'لا نتائج. جرّب كلمات أخرى أو بالإنجليزية/الفرنسية.'}</div>`; }
+      else {
+        box.innerHTML = refItems.map((it, i) => `<div class="ref" data-i="${i}"><div>
+          <div class="ref-t">${esc(it.title)}</div>
+          <div class="ref-m"><span class="ref-b">${esc(it.kind)}</span>${esc([(it.authors || []).join('، '), it.venue, it.year].filter(Boolean).join(' — '))}
+            ${it.url ? ` · <a href="${esc(it.url)}" target="_blank" rel="noopener">فتح</a>` : ''} · <span>${esc(it.source)}</span></div></div>
+          <button class="btn sm" data-add="${i}">+ إضافة</button></div>`).join('')
+          + (failed ? '<div class="refs-msg">تنبيه: تعذّر الوصول إلى بعض المصادر، فقد تكون النتائج ناقصة.</div>' : '');
+      }
+    } catch (err) { box.innerHTML = `<div class="refs-msg err">${esc(err.message)}</div>`; }
+    b.disabled = false;
+  }
+  $('#btnRefs').onclick = searchRefs;
+  $('#refQ').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); searchRefs(); } });
+  $('#refRes').addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-add]'); if (!btn) return;
+    const it = refItems[+btn.dataset.add]; if (!it) return;
+    const ta = $('#refs'); const lines = ta.value.split('\n').map((x) => x.trim()).filter(Boolean);
+    if (!lines.includes(it.citation)) lines.push(it.citation);
+    ta.value = lines.join('\n'); btn.textContent = '✓ أُضيف'; btn.disabled = true; btn.closest('.ref').classList.add('added');
+    if (nodes.length) render(); else save();
+  });
+
+
+  // ---------- تلخيص المحاضرات + المخطط الهرمي ----------
+  let sumFile = null; let sumData = null;
+  const SUM_FONT = "Cairo, Tahoma, 'Noto Sans Arabic', 'Segoe UI', sans-serif";
+  const sumCtx = document.createElement('canvas').getContext('2d');
+  const sumWrap = (text, weight, size, maxW) => {
+    sumCtx.font = `${weight} ${size}px ${SUM_FONT}`;
+    const out = []; let line = '';
+    String(text).split(/\s+/).filter(Boolean).forEach((w) => {
+      const t = line ? line + ' ' + w : w;
+      if (line && sumCtx.measureText(t).width > maxW) { out.push(line); line = w; } else line = t;
+    });
+    if (line) out.push(line); return out.length ? out : [''];
+  };
+
+  function sumDiagram(d) {
+    const BW = 240, GAP = 30, M = 24, PADX = 14, PADY = 11, LH = 23, SLH = 21, VG = 16;
+    const IN = BW - 2 * PADX;
+    const col = color, gold = '#8a6a22';
+    const branches = d.branches || [];
+    const n = Math.max(branches.length, 1);
+    const colsW = n * BW + (n - 1) * GAP;
+    const rootW = Math.min(Math.max(colsW, 300), 460);
+    const W = Math.max(colsW, rootW) + 2 * M;
+    const cx = W / 2;
+    const rootLines = sumWrap(d.title || 'المحاضرة', 800, 19, rootW - 2 * PADX);
+    const rootH = rootLines.length * 28 + 2 * PADY + 6;
+    let svg = ''; const rootY = M;
+    const rect = (x, y, w, h, fill, stroke, sw = 2, rx = 12) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>`;
+    const text = (lines, xr, y0, size, weight, fill, lh) => lines.map((l, i) => `<text x="${xr}" y="${y0 + i * lh}" text-anchor="start" direction="rtl" font-size="${size}" font-weight="${weight}" fill="${fill}">${esc(l)}</text>`).join('');
+    const branchTop = rootY + rootH + 52;
+    // محتوى كل عمود
+    const cols = branches.map((b, i) => {
+      const bl = sumWrap(b.title, 800, 16, IN); const bh = bl.length * LH + 2 * PADY;
+      let y = branchTop + bh + VG + 6;
+      const pts = (b.points || []).map((p) => {
+        const tl = sumWrap(p.title, 700, 14.5, IN);
+        const dl = (p.details || []).map((t) => sumWrap('• ' + t, 400, 13, IN - 6));
+        const h = tl.length * LH + dl.reduce((s, a) => s + a.length * SLH, 0) + 2 * PADY + (dl.length ? 4 : 0);
+        const o = { p, tl, dl, y, h }; y += h + VG; return o;
+      });
+      return { b, bl, bh, pts, x: W - M - BW - i * (BW + GAP), bottom: y - VG };
+    });
+    const H = Math.max(branchTop + 60, ...cols.map((c) => c.bottom)) + M;
+    // روابط الجذر ← المحاور
+    const busY = rootY + rootH + 26;
+    svg += `<path d="M${cx} ${rootY + rootH} V${busY}" stroke="${col}" stroke-width="2" fill="none"/>`;
+    if (cols.length) {
+      const xs = cols.map((c) => c.x + BW / 2);
+      svg += `<path d="M${Math.min(...xs)} ${busY} H${Math.max(...xs)}" stroke="${col}" stroke-width="2" fill="none"/>`;
+      xs.forEach((x) => (svg += `<path d="M${x} ${busY} V${branchTop}" stroke="${col}" stroke-width="2" fill="none"/>`));
+    }
+    // خط كل عمود (خلف الصناديق)
+    cols.forEach((c) => { if (c.pts.length) svg += `<path d="M${c.x + BW / 2} ${branchTop + c.bh} V${c.pts[c.pts.length - 1].y + 14}" stroke="${gold}" stroke-width="2" stroke-dasharray="5 4" fill="none"/>`; });
+    // الجذر
+    svg += rect(cx - rootW / 2, rootY, rootW, rootH, col, col, 2, 14);
+    svg += rootLines.map((l, i) => `<text x="${cx}" y="${rootY + PADY + 22 + i * 28}" text-anchor="middle" direction="rtl" font-size="19" font-weight="800" fill="#fff">${esc(l)}</text>`).join('');
+    // المحاور والنقاط
+    cols.forEach((c) => {
+      svg += rect(c.x, branchTop, BW, c.bh, gold, gold, 2, 12);
+      svg += text(c.bl, c.x + BW - PADX, branchTop + PADY + 17, 16, 800, '#fff', LH);
+      c.pts.forEach((o) => {
+        svg += rect(c.x, o.y, BW, o.h, '#fff', col, 2, 10);
+        let ty = o.y + PADY + 16;
+        svg += text(o.tl, c.x + BW - PADX, ty, 14.5, 700, col, LH); ty += o.tl.length * LH + 2;
+        o.dl.forEach((lines) => { svg += text(lines, c.x + BW - PADX, ty - 2, 13, 400, '#34423d', SLH); ty += lines.length * SLH; });
+      });
+    });
+    return { W: Math.ceil(W), H: Math.ceil(H), body: svg };
+  }
+  const sumSvgString = (g, bg) => `<svg xmlns="http://www.w3.org/2000/svg" width="${g.W}" height="${g.H}" viewBox="0 0 ${g.W} ${g.H}" font-family="${SUM_FONT.replace(/"/g, "'")}">${bg ? `<rect width="100%" height="100%" fill="#fff"/>` : ''}${g.body}</svg>`;
+
+  function sumShow(d) {
+    sumData = d;
+    $('#sumRes').hidden = false;
+    const note = $('#sumNote');
+    note.hidden = !d.demo; note.textContent = d.demo ? 'وضع تجريبي: هذا مخطط مبسّط من نص المحاضرة نفسه. فعّل مفتاح Gemini للحصول على تلخيص حقيقي.' : '';
+    $('#sumOut').textContent = d.summary || '';
+    const g = sumDiagram(d); sumData.geo = g;
+    $('#sumMap').innerHTML = sumSvgString(g, false).replace('<svg ', '<svg style="min-width:' + Math.min(g.W, 760) + 'px;width:' + g.W + 'px;max-width:100%" ');
+    $('#sumRes').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  $('#sumFile').onchange = (e) => {
+    const f = e.target.files[0]; if (!f) return;
+    if (f.size > 5 * 1024 * 1024) { toast('حجم الملف أكبر من 5 ميغابايت.', true); e.target.value = ''; return; }
+    const done = () => { $('#sumFname').textContent = f.name; $('#sumFname').hidden = false; $('#sumFileClear').hidden = false; };
+    const rd = new FileReader();
+    if (f.type === 'text/plain' || /\.txt$/i.test(f.name)) {
+      rd.onload = () => { $('#sumText').value = String(rd.result).slice(0, 30000); sumFile = null; done(); };
+      rd.readAsText(f);
+    } else {
+      rd.onload = () => { const s = String(rd.result); sumFile = { mime: f.type || 'application/pdf', data: s.slice(s.indexOf(',') + 1) }; done(); };
+      rd.readAsDataURL(f);
+    }
+    rd.onerror = () => toast('تعذّر قراءة الملف.', true);
+  };
+  $('#sumFileClear').onclick = () => { sumFile = null; $('#sumFile').value = ''; $('#sumFname').hidden = true; $('#sumFileClear').hidden = true; };
+
+  $('#btnSum').onclick = async () => {
+    const text = $('#sumText').value.trim();
+    if (!sumFile && text.length < 40) { toast('الصق نص المحاضرة (40 حرفًا على الأقل) أو ارفع ملفًا.', true); return; }
+    const b = $('#btnSum'); const old = b.textContent; b.disabled = true; b.textContent = 'جارٍ التلخيص…';
+    try {
+      const r = await api('summarize', { text, file: sumFile, detail: $('#sumDetail').value });
+      const d = await r.json();
+      if (!d.branches || !d.branches.length) throw new Error('لم يُستخرج مخطط من هذا النص. جرّب نصًّا أطول.');
+      sumShow(d);
+    } catch (err) { toast(err.message, true); }
+    b.disabled = false; b.textContent = old;
+  };
+
+  $('#sumCopy').onclick = async () => {
+    try { await navigator.clipboard.writeText((sumData && sumData.summary) || ''); toast('تم نسخ الملخص.'); } catch (e) { toast('تعذّر النسخ، حدّد النص وانسخه يدويًا.', true); }
+  };
+
+  $('#sumPng').onclick = () => {
+    if (!sumData || !sumData.geo) return;
+    const g = sumData.geo; const k = 2; const img = new Image();
+    img.onload = () => {
+      const c = document.createElement('canvas'); c.width = g.W * k; c.height = g.H * k;
+      const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.drawImage(img, 0, 0, c.width, c.height);
+      c.toBlob((bl) => { const a = document.createElement('a'); a.href = URL.createObjectURL(bl); a.download = 'mind-map.png'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); }, 'image/png');
+    };
+    img.onerror = () => toast('تعذّر إنشاء الصورة.', true);
+    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(sumSvgString(g, true));
+  };
 
   // ---------- بداية التشغيل ----------
   load(); $('#wordsOut').textContent = val('words'); $('#yr').textContent = new Date().getFullYear(); markUi();

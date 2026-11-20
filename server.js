@@ -29,6 +29,18 @@ async function write(b) {
   return t || `هذا نص تجريبي لعنوان «${b.heading}». أضف مفتاح GEMINI_API_KEY لتشغيل الكتابة بالذكاء الاصطناعي، ثم أعد توليد هذا القسم.`;
 }
 async function rewrite(b) { return (await ai.rewrite(b)) || b.text; }
+// تلخيص المحاضرات: في الوضع التجريبي يُبنى مخطط بسيط من فقرات النص نفسه
+async function summarize(b) {
+  const file = b.file && typeof b.file.data === 'string' && /^(application\/pdf|image\/(png|jpe?g|webp))$/.test(b.file.mime) ? b.file : null;
+  const text = String(b.text || '');
+  if (!file && text.trim().length < 40) throw new Error('أدخل نص المحاضرة (40 حرفًا على الأقل) أو ارفع ملفًا.');
+  const r = await ai.summarize({ text, file, detail: b.detail });
+  if (r) return r;
+  const parts = text.split(/\n\s*\n|\n/).map((s) => s.trim()).filter((s) => s.length > 20).slice(0, 5);
+  const cut = (s, n) => (s.split(/\s+/).slice(0, n).join(' '));
+  return { demo: true, title: 'مخطط تجريبي للمحاضرة', summary: parts.map((s) => cut(s, 40)).join('\n\n') || cut(text, 80),
+    branches: (parts.length ? parts : [text]).map((s, i) => ({ title: `المحور ${i + 1}`, points: s.split(/[.؟!۔]\s*/).filter((x) => x.trim().length > 8).slice(0, 3).map((x) => ({ title: cut(x, 8), details: [] })) })) };
+}
 
 // ---------- الخادم ----------
 const readBody = (req) => new Promise((res, rej) => {
@@ -48,6 +60,7 @@ http.createServer(async (req, res) => {
       if (url.pathname === '/api/plan') return send(res, 200, await plan(body));
       if (url.pathname === '/api/write') return send(res, 200, { text: await write(body) });
       if (url.pathname === '/api/rewrite') return send(res, 200, { text: await rewrite(body) });
+      if (url.pathname === '/api/summarize') return send(res, 200, await summarize(body));
       if (url.pathname === '/api/export') {
         const buf = await buildDocx(body);
         res.writeHead(200, {

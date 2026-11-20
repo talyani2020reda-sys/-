@@ -19,10 +19,10 @@ async function call(model, body) {
 }
 
 // system: تعليمات النظام · json: مخطط JSON اختياري · temp: حرارة التوليد
-async function gemini(prompt, { system, schema, temp = 0.7, max = 4096 } = {}) {
+async function gemini(prompt, { system, schema, temp = 0.7, max = 4096, inline } = {}) {
   if (!KEY) return null;
   const body = {
-    contents: [{ role: 'user', parts: [{ text: prompt }] }],
+    contents: [{ role: 'user', parts: [...(inline ? [{ inlineData: inline }] : []), { text: prompt }] }],
     generationConfig: { temperature: temp, maxOutputTokens: max, ...(schema ? { responseMimeType: 'application/json', responseSchema: schema } : {}) },
   };
   if (system) body.systemInstruction = { parts: [{ text: system }] };
@@ -118,6 +118,54 @@ ${text}`;
   return t ? clean(t) : null;
 }
 
+// ---------- تلخيص المحاضرات + مخطط هرمي ----------
+const SUM_SYSTEM = `أنت أستاذ جامعي جزائري يلخّص المحاضرات للطلبة بالعربية الفصحى.
+- التزم بمضمون المحاضرة فقط، ولا تضف معلومات من خارجها، ولا تختلق أرقام مواد أو تواريخ أو أحكامًا أو أسماء.
+- احتفظ بالمصطلحات القانونية كما وردت في النص.
+- لا تستعمل رموز Markdown. اجعل العناوين قصيرة (حتى 8 كلمات) والتفاصيل عبارات موجزة (حتى 14 كلمة).`;
+
+const schemaSummary = {
+  type: 'OBJECT',
+  properties: {
+    title: { type: 'STRING' },
+    summary: { type: 'STRING' },
+    branches: { type: 'ARRAY', items: { type: 'OBJECT', properties: {
+      title: { type: 'STRING' },
+      points: { type: 'ARRAY', items: { type: 'OBJECT', properties: { title: { type: 'STRING' }, details: { type: 'ARRAY', items: { type: 'STRING' } } }, required: ['title', 'details'] } },
+    }, required: ['title', 'points'] } },
+  },
+  required: ['title', 'summary', 'branches'],
+};
+
+const SUM_DETAIL = {
+  short: { branches: '3 إلى 4', points: '2 إلى 3', details: 'من صفر إلى تفصيلين', words: '80 إلى 120' },
+  normal: { branches: '4 إلى 5', points: '2 إلى 4', details: 'من تفصيل إلى تفصيلين', words: '140 إلى 200' },
+  detailed: { branches: '5 إلى 7', points: '3 إلى 5', details: 'من تفصيلين إلى ثلاثة', words: '220 إلى 320' },
+};
+
+async function summarize({ text = '', file, detail = 'normal' }) {
+  const d = SUM_DETAIL[detail] || SUM_DETAIL.normal;
+  const body = String(text || '').slice(0, 30000);
+  const prompt = `${file ? 'المحاضرة مرفقة كملف' + (body ? '، وهذه ملاحظات إضافية من الطالب:' : '.') : 'نص المحاضرة:'}
+${body}
+
+المطلوب (JSON):
+- title: عنوان المحاضرة (جذر المخطط).
+- summary: ملخص متماسك في فقرات قصيرة بنحو ${d.words} كلمة.
+- branches: المحاور الكبرى للمحاضرة، عددها ${d.branches}، مرتّبة كما وردت. لكل محور points بعددها ${d.points}، ولكل نقطة details (${d.details}) تضم تعريفًا أو شرطًا أو أثرًا أو مثالًا مذكورًا في المحاضرة.
+- المخطط هرمي: العنوان ← المحاور ← النقاط ← التفاصيل، دون تكرار بين المحاور.`;
+  const inline = file && file.data && file.mime ? { mimeType: file.mime, data: file.data } : undefined;
+  const t = await gemini(prompt, { system: SUM_SYSTEM, schema: schemaSummary, temp: 0.3, max: 8192, inline });
+  if (!t) return null;
+  let p; try { p = JSON.parse(t.replace(/^```json|```$/g, '')); } catch (e) { throw new Error('تعذّر تنظيم الملخص. أعد المحاولة.'); }
+  const arr = (a) => (Array.isArray(a) ? a : []);
+  return {
+    title: clean(p.title),
+    summary: clean(p.summary),
+    branches: arr(p.branches).map((b) => ({ title: clean(b.title), points: arr(b.points).map((x) => ({ title: clean(x.title), details: arr(x.details).map(clean).filter(Boolean) })).filter((x) => x.title) })).filter((b) => b.title),
+  };
+}
+
 // ---------- حماية الحصة: حدّ للطلبات لكل زائر ----------
 const hits = new Map();
 function limited(ip, max = +process.env.AI_LIMIT || 60, windowMs = 10 * 60 * 1000) {
@@ -127,4 +175,4 @@ function limited(ip, max = +process.env.AI_LIMIT || 60, windowMs = 10 * 60 * 100
 }
 setInterval(() => { const now = Date.now(); for (const [k, v] of hits) if (!v.some((t) => now - t < 600000)) hits.delete(k); }, 600000).unref();
 
-module.exports = { enabled: !!KEY, models: MODELS, plan, write, rewrite, limited };
+module.exports = { enabled: !!KEY, models: MODELS, plan, write, rewrite, summarize, limited };
