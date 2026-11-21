@@ -65,6 +65,66 @@ const GUIDE = {
   subsub: 'اكتب هذا الفرع مركّزًا ومحدّدًا في نقطته، بفقرتين أو ثلاث.',
 };
 
+
+// ---------- لغات البحث: الفرنسية والإنجليزية (العربية هي الأصل ولم تتغير) ----------
+const lg = (l) => (l === 'fr' || l === 'en' ? l : 'ar');
+const SYSTEM_L = {
+  ar: SYSTEM,
+  fr: `Tu es un professeur universitaire algérien spécialisé dans la rédaction de recherches académiques en français.
+- Style scientifique sobre, phrases claires, enchaînements logiques, formulations variées et sans remplissage.
+- N'invente jamais de numéros d'articles de loi, de dates de textes, de décisions de justice, de noms d'auteurs ni de statistiques. En cas de doute, énonce le principe de façon générale sans chiffre et écris « à vérifier dans le texte législatif ».
+- N'utilise pas la syntaxe Markdown (ni astérisques ni #). Sépare les paragraphes par une ligne vide et n'utilise "- " que pour les listes, si nécessaire.
+- Ne répète pas le titre de la section au début, n'ajoute ni présentation de toi-même ni conclusion commentée.
+- Rédige exclusivement en français.`,
+  en: `You are an Algerian university professor specialised in writing academic research papers in English.
+- Sober scientific style, clear sentences, logical links between ideas, varied wording and no filler.
+- Never invent statute article numbers, dates of laws, court decisions, author names or statistics. If you are not sure, state the principle in general terms without a number and write "to be checked against the legislative text" where needed.
+- Do not use Markdown syntax (no asterisks, no #). Separate paragraphs with a blank line and use "- " only for lists when needed.
+- Do not repeat the section title at the start, and add no self-introduction or commentary at the end.
+- Write exclusively in English.`,
+};
+const GUIDE_L = {
+  ar: GUIDE,
+  fr: {
+    intro: "Rédige une introduction académique comprenant : une mise en contexte du sujet, son importance, la problématique formulée sous forme de question, la méthode suivie, puis l'annonce succincte du plan de la recherche.",
+    conclusion: "Rédige une conclusion qui résume les principaux résultats en points clairs, puis propose des recommandations pratiques, sans introduire d'informations nouvelles.",
+    chapter: "Rédige une courte introduction à cette section qui résume ce qu'elle traitera et la relie à la section précédente, sans entrer dans les détails.",
+    sub: "Rédige ce paragraphe de façon détaillée et scientifique : définition ou analyse, puis fondement ou caractères, puis effet ou application selon le titre.",
+    subsub: "Rédige ce point de façon ciblée et précise, en deux ou trois paragraphes.",
+  },
+  en: {
+    intro: 'Write an academic introduction that includes: a contextual overview of the topic, its importance, the research problem stated as a question, the method followed, and a brief announcement of the research plan.',
+    conclusion: 'Write a conclusion that summarises the main findings in clear points, then proposes practical recommendations, without adding new information.',
+    chapter: 'Write a short opening for this section that summarises what it will cover and links it to the previous section, without going into details.',
+    sub: 'Write this subsection in scientific detail: a definition or analysis, then the basis or characteristics, then the effect or application according to the title.',
+    subsub: 'Write this point in a focused and precise way, in two or three paragraphs.',
+  },
+};
+const MODES_L = {
+  get ar() { return MODES; },
+  fr: {
+    rewrite: "Reformule le texte dans un style académique plus soutenu en conservant tous les sens et à peu près la même longueur.",
+    simplify: "Simplifie et clarifie le texte avec des formulations plus faciles, sans altérer le sens ni supprimer d'idées.",
+    expand: "Développe le texte avec des explications, des analyses et des exemples généraux (sans inventer de faits ni de chiffres), pour qu'il soit environ deux fois plus long.",
+    shorten: "Résume le texte en environ la moitié de sa longueur en gardant les idées essentielles.",
+    proofread: "Corrige le texte (langue, grammaire, orthographe, ponctuation) uniquement, sans changer le style ni le sens.",
+    custom: "Modifie le texte selon les consignes de l'étudiant.",
+  },
+  en: {
+    rewrite: 'Rewrite the text in a more polished academic style, keeping every meaning and roughly the same length.',
+    simplify: 'Simplify and clarify the text with easier wording, without changing the meaning or dropping any idea.',
+    expand: 'Expand the text with explanation, analysis and general examples (without inventing facts or numbers), making it about twice as long.',
+    shorten: 'Summarise the text to about half its length while keeping the essential ideas.',
+    proofread: 'Proofread the text for language, grammar, spelling and punctuation only, without changing the style or the meaning.',
+    custom: "Edit the text according to the student's instructions.",
+  },
+};
+const UNITS = {
+  ar: { mabhath: ['المباحث', 'المطالب'], fasl: ['الفصول', 'المباحث'] },
+  fr: { mabhath: ['sections', 'paragraphes'], fasl: ['chapitres', 'sections'] },
+  en: { mabhath: ['sections', 'subsections'], fasl: ['chapters', 'sections'] },
+};
+
 const schemaPlan = (d) => {
   const leaf = { type: 'OBJECT', properties: { title: { type: 'STRING' } }, required: ['title'] };
   const sub = { type: 'OBJECT', properties: { title: { type: 'STRING' }, subs: { type: 'ARRAY', items: leaf } }, required: ['title', 'subs'] };
@@ -75,28 +135,59 @@ function clean(t) {
   return String(t || '').replace(/\*\*(.+?)\*\*/g, '$1').replace(/^#+\s*/gm, '').replace(/^\s*\*\s+/gm, '- ').replace(/`/g, '').replace(/\n{3,}/g, '\n\n').trim();
 }
 
-async function plan({ title, field, chapters = 2, depth = 2, system = 'mabhath' }) {
+async function plan({ title, field, chapters = 2, depth = 2, system = 'mabhath', lang }) {
+  const L = lg(lang);
   const n = Math.min(Math.max(+chapters || 2, 1), 5); const d = depth === 3 ? 3 : 2;
-  const unit = system === 'fasl' ? ['الفصول', 'المباحث'] : ['المباحث', 'المطالب'];
-  const prompt = `ضع خطة بحث جامعي لموضوع: «${title}»${field ? ` في مقياس/تخصص: ${field}` : ''}.
+  const unit = UNITS[L][system === 'fasl' ? 'fasl' : 'mabhath'];
+  const prompts = {
+    ar: `ضع خطة بحث جامعي لموضوع: «${title}»${field ? ` في مقياس/تخصص: ${field}` : ''}.
 المطلوب: ${n} من ${unit[0]}، وفي كل واحد منها مطلبان متكاملان (من ${unit[1]})${d === 3 ? '، ولكل مطلب فرعان' : ' ولا تضع فروعًا (اجعل subs مصفوفة فارغة)'}.
 - العناوين محددة وقصيرة ومتدرجة منطقيًا من العام إلى الخاص، وتغطي الموضوع دون تكرار.
 - لا تكتب كلمات الترقيم مثل «المبحث الأول».
-- ${n > 1 ? 'اجعل المبحث الأول للإطار المفاهيمي أو النظري، وما بعده للأحكام والآثار والتطبيق.' : ''}`;
-  const t = await gemini(prompt, { system: SYSTEM, schema: schemaPlan(d), temp: 0.5 });
+- ${n > 1 ? 'اجعل المبحث الأول للإطار المفاهيمي أو النظري، وما بعده للأحكام والآثار والتطبيق.' : ''}`,
+    fr: `Établis le plan d'une recherche universitaire sur le sujet : « ${title} »${field ? ` dans la matière ou la spécialité : ${field}` : ''}.
+Attendu : ${n} ${unit[0]}, chacun comportant deux éléments complémentaires (des ${unit[1]})${d === 3 ? ', et chaque élément comportant deux sous-points' : ' et aucun sous-point (subs doit être un tableau vide)'}.
+- Titres précis et courts, progressant logiquement du général au particulier, couvrant le sujet sans répétition.
+- N'écris pas les mots de numérotation comme « Section 1 ».
+- ${n > 1 ? "Consacre le premier élément au cadre conceptuel ou théorique, et les suivants au régime, aux effets et à l'application." : ''}
+- Rédige tous les titres en français.`,
+    en: `Draw up the plan of a university research paper on the topic: "${title}"${field ? ` in the subject or specialty: ${field}` : ''}.
+Required: ${n} ${unit[0]}, each containing two complementary items (${unit[1]})${d === 3 ? ', and each item containing two sub-points' : ' and no sub-points (subs must be an empty array)'}.
+- Titles are precise and short, moving logically from the general to the particular, covering the topic without repetition.
+- Do not write numbering words such as "Section 1".
+- ${n > 1 ? 'Make the first item the conceptual or theoretical framework, and the following ones the rules, effects and application.' : ''}
+- Write every title in English.`,
+  };
+  const t = await gemini(prompts[L], { system: SYSTEM_L[L], schema: schemaPlan(d), temp: 0.5 });
   if (!t) return null;
   const parsed = JSON.parse(t.replace(/^```json|```$/g, ''));
   return { chapters: (parsed.chapters || []).map((c) => ({ title: clean(c.title), subs: (c.subs || []).map((s) => ({ title: clean(s.title), subs: d === 3 ? (s.subs || []).map((x) => ({ title: clean(x.title) })) : [] })) })) };
 }
 
-async function write({ title, heading, parents, words = 220, instruction = '', type = 'sub', outline = '', prev = '', field = '' }) {
+async function write({ title, heading, parents, words = 220, instruction = '', type = 'sub', outline = '', prev = '', field = '', lang }) {
+  const L = lg(lang);
   const w = Math.min(Math.max(+words || 220, 60), 700);
-  const prompt = `موضوع البحث: «${title}»${field ? ` — المقياس: ${field}` : ''}.
+  const guide = GUIDE_L[L][type] || GUIDE_L[L].sub;
+  const prompts = {
+    ar: `موضوع البحث: «${title}»${field ? ` — المقياس: ${field}` : ''}.
 ${outline ? `خطة البحث كاملة (للاتساق وعدم التكرار):\n${outline}\n` : ''}${parents ? `موقع العنوان في الخطة: ${parents}.\n` : ''}${prev ? `آخر نص كُتب قبل هذا القسم (لا تكرّر أفكاره، واربط به بسلاسة):\n«${String(prev).slice(-700)}»\n` : ''}
 العنوان المطلوب كتابته: «${heading}».
-${GUIDE[type] || GUIDE.sub}
-الطول: نحو ${w} كلمة.${instruction ? `\nتعليمات إضافية من الطالب: ${instruction}` : ''}`;
-  const t = await gemini(prompt, { system: SYSTEM, temp: 0.75, max: Math.max(1024, w * 6) });
+${guide}
+الطول: نحو ${w} كلمة.${instruction ? `\nتعليمات إضافية من الطالب: ${instruction}` : ''}`,
+    fr: `Sujet de la recherche : « ${title} »${field ? ` — Matière : ${field}` : ''}.
+${outline ? `Plan complet de la recherche (pour la cohérence et pour éviter les répétitions) :\n${outline}\n` : ''}${parents ? `Position du titre dans le plan : ${parents}.\n` : ''}${prev ? `Dernier texte rédigé avant cette section (ne répète pas ses idées, enchaîne avec fluidité) :\n« ${String(prev).slice(-700)} »\n` : ''}
+Titre à rédiger : « ${heading} ».
+${guide}
+Longueur : environ ${w} mots.${instruction ? `\nConsignes supplémentaires de l'étudiant : ${instruction}` : ''}
+Rédige en français.`,
+    en: `Research topic: "${title}"${field ? ` — Subject: ${field}` : ''}.
+${outline ? `Full research plan (for consistency and to avoid repetition):\n${outline}\n` : ''}${parents ? `Position of the heading in the plan: ${parents}.\n` : ''}${prev ? `Last text written before this section (do not repeat its ideas, and link to it smoothly):\n"${String(prev).slice(-700)}"\n` : ''}
+Heading to write: "${heading}".
+${guide}
+Length: about ${w} words.${instruction ? `\nExtra instructions from the student: ${instruction}` : ''}
+Write in English.`,
+  };
+  const t = await gemini(prompts[L], { system: SYSTEM_L[L], temp: 0.75, max: Math.max(1024, w * (L === 'ar' ? 6 : 8)) });
   return t ? clean(t) : null;
 }
 
@@ -108,13 +199,26 @@ const MODES = {
   proofread: 'دقّق النص لغويًا ونحويًا وإملائيًا وصحّح علامات الترقيم فقط، دون تغيير الأسلوب أو المعنى.',
   custom: 'عدّل النص وفق تعليمات الطالب.',
 };
-async function rewrite({ text, mode, instruction }) {
-  const prompt = `${MODES[mode] || MODES.custom}${instruction ? `\nتعليمات الطالب: ${instruction}` : ''}
+async function rewrite({ text, mode, instruction, lang }) {
+  const L = lg(lang); const M = MODES_L[L];
+  const prompts = {
+    ar: `${M[mode] || M.custom}${instruction ? `\nتعليمات الطالب: ${instruction}` : ''}
 أعد النص المعدَّل وحده دون أي تعليق أو شرح.
 
 النص:
-${text}`;
-  const t = await gemini(prompt, { system: SYSTEM, temp: mode === 'proofread' ? 0.2 : 0.6, max: 4096 });
+${text}`,
+    fr: `${M[mode] || M.custom}${instruction ? `\nConsignes de l'étudiant : ${instruction}` : ''}
+Renvoie uniquement le texte modifié, sans commentaire ni explication, et en français.
+
+Texte :
+${text}`,
+    en: `${M[mode] || M.custom}${instruction ? `\nStudent's instructions: ${instruction}` : ''}
+Return only the edited text, with no comment or explanation, and in English.
+
+Text:
+${text}`,
+  };
+  const t = await gemini(prompts[L], { system: SYSTEM_L[L], temp: mode === 'proofread' ? 0.2 : 0.6, max: 4096 });
   return t ? clean(t) : null;
 }
 

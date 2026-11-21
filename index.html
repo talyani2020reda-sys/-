@@ -3,7 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>رضا بلاتفورم إكسبوزي — إعداد البحوث الجامعية</title>
+<title>رضا بلاتفورم إكسبوزي — إنجاز البحوث الجامعية وتلخيص المحاضرات</title>
+<meta name="description" content="أنجز بحثك الجامعي بكتابة العنوان فقط: خطة بالمباحث والمطالب والفروع، غلاف مزخرف، تأطير للنصوص، وتصدير Word. وتلخيص المحاضرات في مخطط هرمي. منصة عربية للطلبة.">
+<link rel="canonical" href="https://fastrecharche.onrender.com/">
+<meta name="robots" content="index,follow">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="رضا بلاتفورم إكسبوزي">
+<meta property="og:title" content="رضا بلاتفورم إكسبوزي — إنجاز البحوث الجامعية وتلخيص المحاضرات">
+<meta property="og:description" content="أنجز بحثك الجامعي بكتابة العنوان فقط: خطة بالمباحث والمطالب والفروع، غلاف مزخرف، تأطير للنصوص، وتصدير Word. وتلخيص المحاضرات في مخطط هرمي. منصة عربية للطلبة.">
+<meta property="og:url" content="https://fastrecharche.onrender.com/">
+<meta property="og:locale" content="ar_AR">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"رضا بلاتفورم إكسبوزي","alternateName":"Reda Platform Exposé","url":"https://fastrecharche.onrender.com/","inLanguage":"ar"}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@400;600;700;800;900&display=swap">
 <style>/* ============ رضا بلاتفورم إكسبوزي — نظام التصميم ============ */
@@ -320,6 +330,12 @@ input[type=range]{padding:0;accent-color:var(--gold);height:46px;background:none
 .sum-map{margin-top:22px;border:1.5px solid var(--line);border-radius:14px;background:#fff;overflow:auto;padding:10px}
 .sum-map svg{display:block;margin:0 auto;height:auto;max-width:none}
 @media(max-width:860px){.sum-in{grid-template-columns:1fr}}
+
+/* ---------- لغة البحث الفرنسية/الإنجليزية: اتجاه الورقة فقط ---------- */
+.paper[dir=ltr] .l2 .hd{background:linear-gradient(90deg,var(--tint) 0%,transparent 100%);border-radius:10px 0 0 10px;padding:10px 10px 10px 16px}
+.paper[dir=ltr] .tools,.paper[dir=ltr] .cust{direction:rtl}
+.paper[dir=ltr] .blk.busy::after{left:auto;right:16px}
+.paper[dir=ltr] .body:empty::before{font-family:var(--ui)}
 </style>
 </head>
 <body>
@@ -410,6 +426,8 @@ input[type=range]{padding:0;accent-color:var(--gold);height:46px;background:none
             <select id="chapters"><option>1</option><option selected>2</option><option>3</option><option>4</option></select></label>
           <label class="f"><span>عمق التقسيم</span>
             <select id="depth"><option value="2">مستويان (بدون فروع)</option><option value="3">ثلاثة مستويات (مع فروع)</option></select></label>
+          <label class="f"><span>لغة البحث</span>
+            <select id="lang"><option value="ar">العربية</option><option value="fr">Français — الفرنسية</option><option value="en">English — الإنجليزية</option></select></label>
           <label class="f"><span>طول كل قسم: <b id="wordsOut">220</b> كلمة</span>
             <input type="range" id="words" min="100" max="500" step="20" value="220"></label>
           <label class="f full"><span>قائمة المراجع <em>(اختياري — تكتبها بنفسك، فالمنصة لا تختلق مراجع)</em></span>
@@ -541,8 +559,30 @@ input[type=range]{padding:0;accent-color:var(--gold);height:46px;background:none
   const $$ = (s, r = document) => [...r.querySelectorAll(s)];
   const ORD = ['الأول', 'الثاني', 'الثالث', 'الرابع', 'الخامس', 'السادس', 'السابع', 'الثامن', 'التاسع', 'العاشر', 'الحادي عشر', 'الثاني عشر'];
   const WORDS = { mabhath: ['المبحث', 'المطلب', 'الفرع'], fasl: ['الفصل', 'المبحث', 'المطلب'] };
+  // ---- لغة البحث (العربية افتراضيًا، والواجهة تبقى عربية دائمًا) ----
+  const WORDS_L = {
+    fr: { mabhath: ['Section', 'Paragraphe', 'Sous-paragraphe'], fasl: ['Chapitre', 'Section', 'Paragraphe'] },
+    en: { mabhath: ['Section', 'Subsection', 'Point'], fasl: ['Chapter', 'Section', 'Subsection'] },
+  };
+  const STR = {
+    ar: { rep: 'الجمهورية الجزائرية الديمقراطية الشعبية', min: 'وزارة التعليم العالي والبحث العلمي', by1: 'من إعداد الطلبة', by2: 'من إعداد الطالب(ة)', sup: 'تحت إشراف', yr: 'السنة الجامعية: ', toc: 'فهرس المحتويات', refs: 'قائمة المصادر والمراجع', intro: 'مقدمة', concl: 'خاتمة', ctitle: 'عنوان البحث', ntitle: 'عنوان جديد' },
+    fr: { rep: 'République Algérienne Démocratique et Populaire', min: "Ministère de l'Enseignement Supérieur et de la Recherche Scientifique", by1: 'Réalisé par', by2: 'Réalisé par', sup: 'Sous la direction de', yr: 'Année universitaire : ', toc: 'Table des matières', refs: 'Bibliographie', intro: 'Introduction', concl: 'Conclusion', ctitle: 'Titre de la recherche', ntitle: 'Nouveau titre' },
+    en: { rep: "People's Democratic Republic of Algeria", min: 'Ministry of Higher Education and Scientific Research', by1: 'Prepared by', by2: 'Prepared by', sup: 'Supervised by', yr: 'Academic year: ', toc: 'Table of Contents', refs: 'References', intro: 'Introduction', concl: 'Conclusion', ctitle: 'Research title', ntitle: 'New title' },
+  };
+  const MAPS = {
+    kind: { 'بحث في مقياس': { fr: 'Recherche dans le module', en: 'Research paper' }, 'مذكرة تخرج': { fr: "Mémoire de fin d'études", en: 'Graduation thesis' },
+      'مطبوعة بيداغوجية': { fr: 'Support pédagogique', en: 'Course handout' }, 'عرض': { fr: 'Exposé', en: 'Presentation' }, 'تقرير': { fr: 'Rapport', en: 'Report' } },
+    level: { 'السنة الأولى ليسانس': { fr: 'Licence 1', en: 'Bachelor, 1st year' }, 'السنة الثانية ليسانس': { fr: 'Licence 2', en: 'Bachelor, 2nd year' },
+      'السنة الثالثة ليسانس': { fr: 'Licence 3', en: 'Bachelor, 3rd year' }, 'السنة الأولى ماستر': { fr: 'Master 1', en: 'Master, 1st year' },
+      'السنة الثانية ماستر': { fr: 'Master 2', en: 'Master, 2nd year' }, 'دكتوراه': { fr: 'Doctorat', en: 'Doctorate' } },
+    supervisorRank: { 'أ.د.': { fr: 'Pr.', en: 'Prof.' }, 'د.': { fr: 'Dr.', en: 'Dr.' }, 'أ.': { fr: 'M.', en: 'Mr.' }, 'الأستاذ': { fr: 'M.', en: 'Mr.' }, 'الأستاذة': { fr: 'Mme', en: 'Mrs.' } },
+  };
+  const lang = () => { const v = ($('#lang') || {}).value; return v === 'fr' || v === 'en' ? v : 'ar'; };
+  const S = () => STR[lang()];
+  const dirAttr = () => (lang() === 'ar' ? '' : ' dir="ltr"');
+  const trv = (id, v) => { const L = lang(); return L === 'ar' || !v ? v : ((MAPS[id][v] || {})[L] || v); };
   const FIELDS = ['title', 'subject', 'kind', 'university', 'faculty', 'department', 'level', 'specialty', 'year', 'students', 'group',
-    'supervisorRank', 'supervisor', 'system', 'chapters', 'depth', 'words', 'refs', 'font', 'fontSize', 'lineSpacing'];
+    'supervisorRank', 'supervisor', 'system', 'chapters', 'depth', 'words', 'refs', 'font', 'fontSize', 'lineSpacing', 'lang'];
   const CHECKS = ['toc', 'chapterPageBreak', 'tfChapter', 'tfSub', 'tfSubsub', 'tfIntro'];
   const COVER_FIELDS = ['title', 'subject', 'kind', 'university', 'faculty', 'department', 'level', 'specialty', 'year', 'students', 'group', 'supervisorRank', 'supervisor'];
 
@@ -582,11 +622,11 @@ input[type=range]{padding:0;accent-color:var(--gold);height:46px;background:none
 
   // ---------- الترقيم ----------
   function labels() {
-    const w = WORDS[val('system')] || WORDS.mabhath; const c = [0, 0, 0];
+    const L = lang(); const w = (L === 'ar' ? WORDS : WORDS_L[L])[val('system')] || (L === 'ar' ? WORDS : WORDS_L[L]).mabhath; const c = [0, 0, 0];
     nodes.forEach((n) => {
       if (n.type === 'intro' || n.type === 'conclusion' || n.type === 'free') { n.label = ''; return; }
       const l = n.level - 1; c[l]++; for (let i = l + 1; i < 3; i++) c[i] = 0;
-      n.label = `${w[l]} ${ORD[c[l] - 1] || c[l]}`;
+      n.label = `${w[l]} ${L === 'ar' ? (ORD[c[l] - 1] || c[l]) : c[l]}`;
     });
   }
   const parentsOf = (i) => { const out = []; let lvl = nodes[i].level; for (let j = i - 1; j >= 0 && lvl > 1; j--) if (nodes[j].level < lvl) { out.unshift(nodes[j].title); lvl = nodes[j].level; } return out.join(' ← '); };
@@ -606,41 +646,41 @@ input[type=range]{padding:0;accent-color:var(--gold);height:46px;background:none
       ${g}<circle cx="750" cy="75" r="62" fill="#fff" stroke="${a}" stroke-width="3"/><circle cx="750" cy="75" r="52" fill="none" stroke="${m}" stroke-width="1.5"/>${star(750, 38, m, 2.2)}${star(750, 24, a, 2)}</g></svg>`;
   };
   function coverHtml() {
-    const m = (id) => esc(val(id)); const st = students(); const sup = [val('supervisorRank'), val('supervisor')].filter(Boolean).join(' ');
+    const m = (id) => esc(val(id)); const mt = (id) => esc(trv(id, val(id))); const st = students(); const sup = [trv('supervisorRank', val('supervisorRank')), val('supervisor')].filter(Boolean).join(' '); const T = S();
     if (coverStyle === 'frame') {
-      const t = val('title') || 'عنوان البحث'; const n = t.length; const px = n <= 34 ? 18 : n <= 70 ? 14 : n <= 105 ? 12 : 10;
-      return `<article class="paper cover frame">
+      const t = val('title') || S().ctitle; const n = t.length; const px = n <= 34 ? 18 : n <= 70 ? 14 : n <= 105 ? 12 : 10;
+      return `<article class="paper cover frame"${dirAttr()}>
         <div class="c-title" style="font-size:calc(var(--u)*${px})">${esc(t)}</div>
         <div class="c-main">
-          <div class="a1">الجمهورية الجزائرية الديمقراطية الشعبية</div><div class="a2">وزارة التعليم العالي والبحث العلمي</div>
+          <div class="a1">${T.rep}</div><div class="a2">${T.min}</div>
           ${logo ? `<img src="${logo}" alt="">` : ''}
           <div class="a3">${m('university')}</div>
           ${[m('faculty'), m('department')].filter(Boolean).length ? `<div class="a4">${[m('faculty'), m('department')].filter(Boolean).join(' — ')}</div>` : ''}
-          ${[m('level'), m('specialty')].filter(Boolean).length ? `<div class="a4">${[m('level'), m('specialty')].filter(Boolean).join(' — ')}</div>` : ''}
-          <div class="a5">${m('kind')}</div>${val('subject') ? `<div class="a6">${m('subject')}</div>` : ''}
+          ${[mt('level'), m('specialty')].filter(Boolean).length ? `<div class="a4">${[mt('level'), m('specialty')].filter(Boolean).join(' — ')}</div>` : ''}
+          <div class="a5">${mt('kind')}</div>${val('subject') ? `<div class="a6">${m('subject')}</div>` : ''}
           <div class="c-who">
-            <div><small>${st.length > 1 ? 'من إعداد الطلبة' : 'من إعداد الطالب(ة)'}</small>${(st.length ? st : ['—']).map((x) => `<b>${esc(x)}</b>`).join('')}${val('group') ? `<i>${m('group')}</i>` : ''}</div>
-            <div><small>تحت إشراف</small><b>${esc(sup) || '—'}</b></div>
+            <div><small>${st.length > 1 ? T.by1 : T.by2}</small>${(st.length ? st : ['—']).map((x) => `<b>${esc(x)}</b>`).join('')}${val('group') ? `<i>${m('group')}</i>` : ''}</div>
+            <div><small>${T.sup}</small><b>${esc(sup) || '—'}</b></div>
           </div>
         </div>
-        <div class="c-year">${val('year') ? 'السنة الجامعية: ' + m('year') : ''}</div></article>`;
+        <div class="c-year">${val('year') ? T.yr + m('year') : ''}</div></article>`;
     }
     const ornate = coverStyle === 'ornate';
-    return `<article class="paper cover">
+    return `<article class="paper cover"${dirAttr()}>
       ${ornate ? ornSvg(false) : '<div class="rule"></div>'}
-      <div class="cv1">الجمهورية الجزائرية الديمقراطية الشعبية</div>
-      <div class="cv2">وزارة التعليم العالي والبحث العلمي</div>
+      <div class="cv1">${T.rep}</div>
+      <div class="cv2">${T.min}</div>
       ${logo ? `<img class="lg" src="${logo}" alt="">` : ''}
       <div class="cv3">${m('university') || '&nbsp;'}</div>
       <div class="cv4">${[m('faculty'), m('department')].filter(Boolean).join(' — ')}</div>
-      <div class="cv4">${[m('level'), m('specialty')].filter(Boolean).join(' — ')}</div>
-      <div class="cv5">${m('kind')}</div><div class="cv6">${m('subject')}</div>
-      <div class="tbox">${m('title') || 'عنوان البحث'}</div>
+      <div class="cv4">${[mt('level'), m('specialty')].filter(Boolean).join(' — ')}</div>
+      <div class="cv5">${mt('kind')}</div><div class="cv6">${m('subject')}</div>
+      <div class="tbox">${m('title') || T.ctitle}</div>
       <div class="who">
-        <div><small>${st.length > 1 ? 'من إعداد الطلبة' : 'من إعداد الطالب(ة)'}</small>${(st.length ? st : ['—']).map((x) => `<b>${esc(x)}</b>`).join('')}${val('group') ? `<i>${m('group')}</i>` : ''}</div>
-        <div><small>تحت إشراف</small><b>${esc(sup) || '—'}</b></div>
+        <div><small>${st.length > 1 ? T.by1 : T.by2}</small>${(st.length ? st : ['—']).map((x) => `<b>${esc(x)}</b>`).join('')}${val('group') ? `<i>${m('group')}</i>` : ''}</div>
+        <div><small>${T.sup}</small><b>${esc(sup) || '—'}</b></div>
       </div>
-      <div class="yr">${val('year') ? 'السنة الجامعية: ' + m('year') : ''}</div>
+      <div class="yr">${val('year') ? T.yr + m('year') : ''}</div>
       ${ornate ? ornSvg(true) : '<div class="rule"></div>'}</article>`;
   }
   function updateLive() {
@@ -654,7 +694,7 @@ input[type=range]{padding:0;accent-color:var(--gold);height:46px;background:none
     const r = document.documentElement.style;
     r.setProperty('--brand', color); r.setProperty('--navy', color);
     r.setProperty('--fs', val('fontSize') + 'px'); r.setProperty('--lh', val('lineSpacing'));
-    const f = val('font'); r.setProperty('--doc', f === 'Arial' ? "Arial,'Noto Sans Arabic',sans-serif" : `'${f}','Amiri','Noto Naskh Arabic',serif`);
+    const f = val('font'); r.setProperty('--doc', lang() !== 'ar' ? (f === 'Arial' ? "Arial,Helvetica,sans-serif" : "'Times New Roman','Liberation Serif',Georgia,serif") : f === 'Arial' ? "Arial,'Noto Sans Arabic',sans-serif" : `'${f}','Amiri','Noto Naskh Arabic',serif`);
   }
 
   // ---------- العرض ----------
@@ -663,8 +703,8 @@ input[type=range]{padding:0;accent-color:var(--gold);height:46px;background:none
     if (!nodes.length) { save(); return; }
     const desk = $('#desk'); const keepScroll = window.scrollY;
 
-    const toc = $('#toc').checked ? `<article class="paper tocp f-${frame}"><h3>فهرس المحتويات</h3><ol>${nodes.map((n) =>
-      `<li class="l${n.level}"><span>${esc((n.label ? n.label + ': ' : '') + n.title)}</span></li>`).join('')}${val('refs') ? '<li class="l1"><span>قائمة المصادر والمراجع</span></li>' : ''}</ol></article>` : '';
+    const toc = $('#toc').checked ? `<article class="paper tocp f-${frame}"${dirAttr()}><h3>${S().toc}</h3><ol>${nodes.map((n) =>
+      `<li class="l${n.level}"><span>${esc((n.label ? n.label + ': ' : '') + n.title)}</span></li>`).join('')}${val('refs') ? '<li class="l1"><span>' + S().refs + '</span></li>' : ''}</ol></article>` : '';
 
     const blocks = nodes.map((n, i) => `
       <div class="blk l${n.level} ${n.type}${hasChildren(i) ? ' has-kids' : ''}" data-id="${n.id}" id="n${n.id}">
@@ -683,9 +723,9 @@ input[type=range]{padding:0;accent-color:var(--gold);height:46px;background:none
         </div>
       </div>`).join('');
 
-    desk.innerHTML = coverHtml() + toc + `<article class="paper f-${frame}">${blocks}</article>`;
+    desk.innerHTML = coverHtml() + toc + `<article class="paper f-${frame}"${dirAttr()}>${blocks}</article>`;
 
-    $('#navList').innerHTML = nodes.map((n) => `<li class="l${n.level} ${n.body ? '' : 'empty'}"><a href="#n${n.id}">${esc((n.label ? n.label + ': ' : '') + n.title)}</a></li>`).join('');
+    $('#navList').innerHTML = nodes.map((n) => `<li class="l${n.level} ${n.body ? '' : 'empty'}"><a dir="auto" href="#n${n.id}">${esc((n.label ? n.label + ': ' : '') + n.title)}</a></li>`).join('');
     const words = nodes.reduce((s, n) => s + (n.body ? n.body.split(/\s+/).filter(Boolean).length : 0), 0);
     $('#stats').textContent = `${nodes.length} عنوانًا · ${words} كلمة · ≈ ${Math.max(1, Math.round(words / 250))} صفحة نصية`;
     window.scrollTo(0, keepScroll);
@@ -709,7 +749,7 @@ input[type=range]{padding:0;accent-color:var(--gold);height:46px;background:none
     const outline = nodes.map((x) => '  '.repeat(x.level - 1) + '- ' + (x.label ? x.label + ': ' : '') + x.title).join('\n');
     let prev = ''; for (let j = i - 1; j >= 0; j--) if (nodes[j].body) { prev = nodes[j].body; break; }
     const r = await api('write', { title: val('title'), field: val('subject'), heading: (n.label ? n.label + ': ' : '') + n.title, parents: parentsOf(i),
-      type: n.type === 'free' ? 'sub' : n.type, outline, prev, words: +val('words') * (n.type === 'intro' || n.type === 'conclusion' ? 1.2 : 1) });
+      type: n.type === 'free' ? 'sub' : n.type, outline, prev, lang: lang(), words: +val('words') * (n.type === 'intro' || n.type === 'conclusion' ? 1.2 : 1) });
     n.body = (await r.json()).text;
   }
   const setBusy = (id, on) => { const b = $(`.blk[data-id="${id}"]`); if (b) { b.classList.toggle('busy', on); $$('button', b).forEach((x) => (x.disabled = on)); } };
@@ -722,7 +762,7 @@ input[type=range]{padding:0;accent-color:var(--gold);height:46px;background:none
       if (a === 'up' || a === 'down') { const j = a === 'up' ? i - 1 : i + 1; if (j < 0 || j >= nodes.length) return;
         [nodes[i], nodes[j]] = [nodes[j], nodes[i]]; render(); $(`#n${id}`).scrollIntoView({ block: 'center' }); return; }
       if (a === 'addsub') { let end = i + 1; while (nodes[end] && nodes[end].level > n.level) end++;
-        nodes.splice(end, 0, { id: ++uid, type: n.level === 1 ? 'sub' : 'subsub', level: n.level + 1, title: 'عنوان جديد', body: '' }); render(); return; }
+        nodes.splice(end, 0, { id: ++uid, type: n.level === 1 ? 'sub' : 'subsub', level: n.level + 1, title: S().ntitle, body: '' }); render(); return; }
       if (a === 'undo') { n.body = undo.get(id); undo.delete(id); render(); return; }
       if (a === 'custom') {
         if ($('.cust', blk)) return;
@@ -740,7 +780,7 @@ input[type=range]{padding:0;accent-color:var(--gold);height:46px;background:none
   async function doRewrite(n, id, mode, instruction) {
     if (!n.body) { toast('اكتب نصًّا أولًا أو استعمل «كتابة هذا القسم».', true); return; }
     setBusy(id, true);
-    try { undo.set(id, n.body); n.body = (await (await api('rewrite', { text: n.body, mode, instruction })).json()).text; render(); }
+    try { undo.set(id, n.body); n.body = (await (await api('rewrite', { text: n.body, mode, instruction, lang: lang() })).json()).text; render(); }
     catch (err) { toast(err.message, true); setBusy(id, false); }
   }
 
@@ -751,8 +791,8 @@ input[type=range]{padding:0;accent-color:var(--gold);height:46px;background:none
     if (nodes.length && !confirm('سيُستبدل المحتوى الحالي بخطة جديدة. متابعة؟')) return;
     const b = $('#btnPlan'); b.disabled = true; $('#planHint').textContent = 'جارٍ وضع الخطة…';
     try {
-      const r = await (await api('plan', { title: val('title'), field: val('subject'), chapters: +val('chapters'), depth: +val('depth'), system: val('system') })).json();
-      nodes = [{ id: ++uid, type: 'intro', level: 1, title: 'مقدمة', body: '' }];
+      const r = await (await api('plan', { title: val('title'), field: val('subject'), chapters: +val('chapters'), depth: +val('depth'), system: val('system'), lang: lang() })).json();
+      nodes = [{ id: ++uid, type: 'intro', level: 1, title: S().intro, body: '' }];
       (r.chapters || []).forEach((c) => {
         nodes.push({ id: ++uid, type: 'chapter', level: 1, title: c.title, body: '' });
         (c.subs || []).forEach((s) => {
@@ -760,7 +800,7 @@ input[type=range]{padding:0;accent-color:var(--gold);height:46px;background:none
           if (+val('depth') === 3) (s.subs || []).forEach((t) => nodes.push({ id: ++uid, type: 'subsub', level: 3, title: t.title, body: '' }));
         });
       });
-      nodes.push({ id: ++uid, type: 'conclusion', level: 1, title: 'خاتمة', body: '' });
+      nodes.push({ id: ++uid, type: 'conclusion', level: 1, title: S().concl, body: '' });
       showWorkspace(); render();
       toast(r.demo ? 'خطة تجريبية — فعّل مفتاح Gemini للحصول على خطة مخصّصة لموضوعك.' : 'تم إنشاء الخطة. عدّل العناوين واكتب مباشرةً في العرض.');
       $('#workspace').scrollIntoView();
@@ -784,7 +824,7 @@ input[type=range]{padding:0;accent-color:var(--gold);height:46px;background:none
   };
   $('#btnAddChapter').onclick = () => {
     const ci = nodes.map((n) => n.type).lastIndexOf('conclusion');
-    nodes.splice(ci < 0 ? nodes.length : ci, 0, { id: ++uid, type: 'chapter', level: 1, title: 'عنوان جديد', body: '' }); render();
+    nodes.splice(ci < 0 ? nodes.length : ci, 0, { id: ++uid, type: 'chapter', level: 1, title: S().ntitle, body: '' }); render();
     $(`#n${uid}`).scrollIntoView({ block: 'center' });
   };
 
@@ -794,9 +834,10 @@ input[type=range]{padding:0;accent-color:var(--gold);height:46px;background:none
     try {
       const meta = { students: students(), logo, coverStyle };
       ['title', 'subject', 'kind', 'university', 'faculty', 'department', 'level', 'specialty', 'year', 'group', 'supervisorRank', 'supervisor'].forEach((k) => (meta[k] = val(k)));
+      ['kind', 'level', 'supervisorRank'].forEach((k) => (meta[k] = trv(k, meta[k])));
       const r = await api('export', { meta, nodes: nodes.map(({ type, level, label, title, body }) => ({ type, level, label, title, body })),
         references: val('refs').split('\n').map((s) => s.trim()).filter(Boolean),
-        options: { frame, color, font: val('font'), fontSize: +val('fontSize'), lineSpacing: +val('lineSpacing'), toc: $('#toc').checked,
+        options: { lang: lang(), strings: S(), frame, color, font: val('font'), fontSize: +val('fontSize'), lineSpacing: +val('lineSpacing'), toc: $('#toc').checked,
           chapterPageBreak: $('#chapterPageBreak').checked, textFrame: { style: tfStyle === 'none' ? null : tfStyle, scope: scope() } } });
       const blob = await r.blob(); const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
       a.download = (val('title') || 'بحث').slice(0, 60) + '.docx'; document.body.append(a); a.click(); a.remove();
@@ -825,6 +866,14 @@ input[type=range]{padding:0;accent-color:var(--gold);height:46px;background:none
   live.forEach((id) => $('#' + id).addEventListener('input', () => { clearTimeout(refresh.t); refresh.t = setTimeout(render, 200); }));
   ['font', 'fontSize', 'lineSpacing', ...CHECKS].forEach((id) => $('#' + id).addEventListener('change', render));
   $('#words').oninput = () => { $('#wordsOut').textContent = val('words'); save(); };
+  $('#lang').addEventListener('change', () => {
+    const L = lang();
+    nodes.forEach((n) => {
+      const key = n.type === 'intro' ? 'intro' : n.type === 'conclusion' ? 'concl' : null;
+      if (key && Object.values(STR).some((t) => t[key] === n.title)) n.title = STR[L][key];
+    });
+    render();
+  });
 
   // شعار الجامعة: تصغير الصورة قبل حفظها
   $('#logoFile').onchange = (e) => {

@@ -26,7 +26,12 @@ async function buildDocx(data) {
   const nodes = Array.isArray(data.nodes) ? data.nodes : [];
   const refs = (data.references || []).map(clean).filter(Boolean);
 
-  const FONT = opt.font || 'Traditional Arabic';
+  // لغة البحث: العربية (RTL) أو الفرنسية/الإنجليزية (LTR). النصوص الثابتة تأتي من الواجهة (opt.strings)
+  const LANG = opt.lang === 'fr' || opt.lang === 'en' ? opt.lang : 'ar';
+  const RTL = LANG === 'ar';
+  const STR = opt.strings || {};
+  const S = (k, dflt) => (RTL ? dflt : (STR[k] || dflt));
+  const FONT = RTL ? (opt.font || 'Traditional Arabic') : (opt.font === 'Arial' ? 'Arial' : 'Times New Roman');
   const PT = Math.min(Math.max(Number(opt.fontSize) || 16, 12), 20);
   const SZ = PT * 2;
   const LINE = Math.round((Number(opt.lineSpacing) || 1.5) * 240);
@@ -36,14 +41,14 @@ async function buildDocx(data) {
   const font = { ascii: FONT, hAnsi: FONT, cs: FONT, eastAsia: FONT };
 
   const run = (text, o = {}) => new TextRun({
-    text: clean(text), font, rightToLeft: true,
+    text: clean(text), font, rightToLeft: RTL,
     size: o.size || SZ, sizeComplexScript: o.size || SZ,
     bold: !!o.bold, boldComplexScript: !!o.bold,
     color: o.color, italics: false,
   });
 
   const para = (children, o = {}) => new Paragraph({
-    bidirectional: true,
+    bidirectional: RTL,
     alignment: o.align || AlignmentType.START,
     spacing: { line: o.line || LINE, before: o.before || 0, after: o.after == null ? 120 : o.after },
     ...(o.rest || {}),
@@ -73,7 +78,7 @@ async function buildDocx(data) {
       if (framed) {
         const txt = l.replace(/^[-•*]\s+/, '');
         out.push(new Paragraph({
-          bidirectional: true, alignment: AlignmentType.BOTH,
+          bidirectional: RTL, alignment: AlignmentType.BOTH,
           border: frameBorder(), indent: { left: 160, right: 160 },
           ...(TFSTYLE === 'shaded' ? { shading: { type: ShadingType.CLEAR, fill: 'F7F8FB', color: 'auto' } } : {}),
           spacing: { line: LINE, after: 60 },
@@ -81,7 +86,7 @@ async function buildDocx(data) {
         }));
       } else if (isBul) {
         out.push(new Paragraph({
-          bidirectional: true, alignment: AlignmentType.BOTH,
+          bidirectional: RTL, alignment: AlignmentType.BOTH,
           numbering: { reference: 'bul', level: 0 },
           spacing: { line: LINE, after: 60 },
           children: [run(l.replace(/^[-•*]\s+/, ''))],
@@ -97,21 +102,21 @@ async function buildDocx(data) {
   // ---------- أنماط العناوين (تُستعمل أيضًا في الفهرس) ----------
   const hStyle = (id, name, size, o = {}) => ({
     id, name, basedOn: 'Normal', next: 'Normal', quickFormat: true,
-    run: { font, size, sizeComplexScript: size, bold: true, boldComplexScript: true, color: o.color || NAVY, rightToLeft: true },
+    run: { font, size, sizeComplexScript: size, bold: true, boldComplexScript: true, color: o.color || NAVY, rightToLeft: RTL },
     paragraph: {
-      bidirectional: true, alignment: o.align || AlignmentType.START, keepNext: true,
+      bidirectional: RTL, alignment: o.align || AlignmentType.START, keepNext: true,
       spacing: { before: o.before, after: o.after, line: 300 }, outlineLevel: o.lvl,
       ...(o.paragraph || {}),
     },
   });
   const tocStyle = (id, name, left) => ({
     id, name, basedOn: 'Normal', next: 'Normal',
-    run: { font, size: SZ, sizeComplexScript: SZ, rightToLeft: true },
-    paragraph: { bidirectional: true, indent: { left }, spacing: { line: 300, after: 80 } },
+    run: { font, size: SZ, sizeComplexScript: SZ, rightToLeft: RTL },
+    paragraph: { bidirectional: RTL, indent: { left }, spacing: { line: 300, after: 80 } },
   });
 
   const styles = {
-    default: { document: { run: { font, size: SZ, sizeComplexScript: SZ, rightToLeft: true }, paragraph: { bidirectional: true } } },
+    default: { document: { run: { font, size: SZ, sizeComplexScript: SZ, rightToLeft: RTL, ...(RTL ? {} : { language: { value: LANG === 'fr' ? 'fr-FR' : 'en-US' } }) }, paragraph: { bidirectional: RTL } } },
     paragraphStyles: [
       hStyle('Heading1', 'heading 1', SZ + 8, {
         before: 360, after: 200, lvl: 0, align: AlignmentType.CENTER,
@@ -136,7 +141,7 @@ async function buildDocx(data) {
     const lvl = n.level === 3 ? 'Heading3' : n.level === 2 ? 'Heading2' : 'Heading1';
     const text = n.label ? `${n.label}: ${n.title}` : n.title;
     return new Paragraph({
-      style: lvl, bidirectional: true,
+      style: lvl, bidirectional: RTL,
       pageBreakBefore: lvl === 'Heading1' && !!opt.chapterPageBreak && !n.first,
       children: [run(text, { size: undefined, bold: true, color: lvl === 'Heading3' ? '7A5C1A' : NAVY })],
     });
@@ -178,7 +183,7 @@ async function buildDocx(data) {
   }
 
   const titleBox = new Table({
-    width: { size: 8400, type: WidthType.DXA }, alignment: AlignmentType.CENTER, visuallyRightToLeft: true,
+    width: { size: 8400, type: WidthType.DXA }, alignment: AlignmentType.CENTER, visuallyRightToLeft: RTL,
     columnWidths: [8400], layout: TableLayoutType.FIXED,
     rows: [new TableRow({ children: [new TableCell({
       width: { size: 8400, type: WidthType.DXA }, verticalAlign: VerticalAlign.CENTER,
@@ -188,23 +193,23 @@ async function buildDocx(data) {
         top: { style: BorderStyle.DOUBLE, size: 8, color: GOLD }, bottom: { style: BorderStyle.DOUBLE, size: 8, color: GOLD },
         left: { style: BorderStyle.SINGLE, size: 12, color: NAVY }, right: { style: BorderStyle.SINGLE, size: 12, color: NAVY },
       },
-      children: [cc(meta.title || 'عنوان البحث', { pt: 26, bold: true, color: NAVY, after: 0, line: 480 })],
+      children: [cc(meta.title || S('ctitle', 'عنوان البحث'), { pt: 26, bold: true, color: NAVY, after: 0, line: 480 })],
     })] })],
   });
 
   const students = (Array.isArray(meta.students) ? meta.students : String(meta.students || meta.student || '').split('\n'))
     .map((x) => clean(x).trim()).filter(Boolean);
   const stCell = [
-    para([run(students.length > 1 ? 'من إعداد الطلبة' : 'من إعداد الطالب(ة)', { size: 26, bold: true, color: GOLD })], { after: 30, line: 300 }),
+    para([run(students.length > 1 ? S('by1', 'من إعداد الطلبة') : S('by2', 'من إعداد الطالب(ة)'), { size: 26, bold: true, color: GOLD })], { after: 30, line: 300 }),
     ...(students.length ? students : ['—']).map((st) => para([run(st, { size: 30, bold: true, color: NAVY })], { after: 20, line: 300 })),
     ...(meta.group ? [para([run(meta.group, { size: 24, color: '555555' })], { after: 20, line: 300 })] : []),
   ];
   const supCell = [
-    para([run('تحت إشراف', { size: 26, bold: true, color: GOLD })], { align: AlignmentType.END, after: 30, line: 300 }),
+    para([run(S('sup', 'تحت إشراف'), { size: 26, bold: true, color: GOLD })], { align: AlignmentType.END, after: 30, line: 300 }),
     para([run([meta.supervisorRank, meta.supervisor].filter(Boolean).join(' ') || '—', { size: 30, bold: true, color: NAVY })], { align: AlignmentType.END, after: 20, line: 300 }),
   ];
   const infoTable = new Table({
-    width: { size: 8400, type: WidthType.DXA }, alignment: AlignmentType.CENTER, visuallyRightToLeft: true,
+    width: { size: 8400, type: WidthType.DXA }, alignment: AlignmentType.CENTER, visuallyRightToLeft: RTL,
     columnWidths: [4200, 4200], layout: TableLayoutType.FIXED,
     rows: [new TableRow({ children: [stCell, supCell].map((c) => new TableCell({
       width: { size: 4200, type: WidthType.DXA }, borders: noB, margins: { top: 60, bottom: 60, left: 120, right: 120 }, children: c })) })],
@@ -213,8 +218,8 @@ async function buildDocx(data) {
   const levelLine = [meta.level, meta.specialty].filter(Boolean).join(' — ');
   const cover = [
     ornate ? band(topImg) : rule(0, 120),
-    cc(meta.country || 'الجمهورية الجزائرية الديمقراطية الشعبية', { pt: 15, bold: true, color: NAVY, before: 160, after: 20 }),
-    cc(meta.ministry || 'وزارة التعليم العالي والبحث العلمي', { pt: 14, color: NAVY, after: 60 }),
+    cc(meta.country || S('rep', 'الجمهورية الجزائرية الديمقراطية الشعبية'), { pt: 15, bold: true, color: NAVY, before: 160, after: 20 }),
+    cc(meta.ministry || S('min', 'وزارة التعليم العالي والبحث العلمي'), { pt: 14, color: NAVY, after: 60 }),
     ...(logoPara ? [logoPara] : []),
     cc(meta.university, { pt: 18, bold: true, color: NAVY, after: 20 }),
     cc([meta.faculty, meta.department].filter(Boolean).join(' — '), { pt: 14, color: '555555', after: levelLine ? 20 : 500 }),
@@ -224,7 +229,7 @@ async function buildDocx(data) {
     titleBox,
     new Paragraph({ spacing: { before: 700, after: 0 }, children: [] }),
     infoTable,
-    cc(meta.year ? `السنة الجامعية: ${meta.year}` : '', { pt: 16, bold: true, color: NAVY, before: 700, after: 360 }),
+    cc(meta.year ? `${S('yr', 'السنة الجامعية: ')}${meta.year}` : '', { pt: 16, bold: true, color: NAVY, before: 700, after: 360 }),
     ornate ? band(botImg) : rule(120, 0),
   ];
 
@@ -235,17 +240,17 @@ async function buildDocx(data) {
   const buildFrameCover = () => {
     const EX = (line) => ({ line, lineRule: LineRuleType.EXACT });
     const T = (text, pt, o = {}) => new Paragraph({
-      bidirectional: true, alignment: o.align || AlignmentType.CENTER,
+      bidirectional: RTL, alignment: o.align || AlignmentType.CENTER,
       spacing: { ...EX(o.line || Math.round(pt * 24)), before: o.before || 0, after: 0 },
       children: [run(text, { size: pt * 2, bold: o.bold, color: o.color })],
     });
     const out = []; let y = FR.ovalTop + FR.ovalH;
 
     // العنوان داخل الإطار البيضوي
-    const t = clean(meta.title || 'عنوان البحث'); const n = t.length;
+    const t = clean(meta.title || S('ctitle', 'عنوان البحث')); const n = t.length;
     const tpt = n <= 34 ? 18 : n <= 70 ? 14 : n <= 105 ? 12 : 10;
     out.push(new Table({
-      width: { size: FR.ovalW, type: WidthType.DXA }, alignment: AlignmentType.CENTER, visuallyRightToLeft: true,
+      width: { size: FR.ovalW, type: WidthType.DXA }, alignment: AlignmentType.CENTER, visuallyRightToLeft: RTL,
       columnWidths: [FR.ovalW], layout: TableLayoutType.FIXED,
       rows: [new TableRow({ height: { value: FR.ovalH, rule: HeightRule.EXACT }, children: [new TableCell({
         width: { size: FR.ovalW, type: WidthType.DXA }, verticalAlign: VerticalAlign.CENTER, borders: noB,
@@ -257,8 +262,8 @@ async function buildDocx(data) {
     const add = (p, h) => { out.push(p); y += h; };
     const gap = 4780 - y; // أسفل زخرفة الإطار البيضوي
     add(new Paragraph({ spacing: { ...EX(Math.max(20, gap)), before: 0, after: 0 }, children: [] }), Math.max(20, gap));
-    add(T(meta.country || 'الجمهورية الجزائرية الديمقراطية الشعبية', 15, { bold: true, color: NAVY }), 360);
-    add(T(meta.ministry || 'وزارة التعليم العالي والبحث العلمي', 14, { color: NAVY }), 336);
+    add(T(meta.country || S('rep', 'الجمهورية الجزائرية الديمقراطية الشعبية'), 15, { bold: true, color: NAVY }), 360);
+    add(T(meta.ministry || S('min', 'وزارة التعليم العالي والبحث العلمي'), 14, { color: NAVY }), 336);
     if (logoPara) { out.push(logoPara); y += 1330; }
     add(T(meta.university, 18, { bold: true, color: NAVY, before: 60 }), 432 + 60);
     const fd = [meta.faculty, meta.department].filter(Boolean).join(' — ');
@@ -273,17 +278,17 @@ async function buildDocx(data) {
       .map((x) => clean(x).trim()).filter(Boolean);
     const L = 340;
     const stCell = [
-      T(sts.length > 1 ? 'من إعداد الطلبة' : 'من إعداد الطالب(ة)', 13, { bold: true, color: GOLD, align: AlignmentType.START, line: L }),
+      T(sts.length > 1 ? S('by1', 'من إعداد الطلبة') : S('by2', 'من إعداد الطالب(ة)'), 13, { bold: true, color: GOLD, align: AlignmentType.START, line: L }),
       ...(sts.length ? sts : ['—']).map((x) => T(x, 15, { bold: true, color: NAVY, align: AlignmentType.START, line: L })),
       ...(meta.group ? [T(meta.group, 12, { color: '555555', align: AlignmentType.START, line: L })] : []),
     ];
     const supCell = [
-      T('تحت إشراف', 13, { bold: true, color: GOLD, align: AlignmentType.END, line: L }),
+      T(S('sup', 'تحت إشراف'), 13, { bold: true, color: GOLD, align: AlignmentType.END, line: L }),
       T([meta.supervisorRank, meta.supervisor].filter(Boolean).join(' ') || '—', 15, { bold: true, color: NAVY, align: AlignmentType.END, line: L }),
     ];
     out.push(new Paragraph({ spacing: { ...EX(20), before: 380, after: 0 }, children: [] })); y += 400;
     out.push(new Table({
-      width: { size: 8300, type: WidthType.DXA }, alignment: AlignmentType.CENTER, visuallyRightToLeft: true,
+      width: { size: 8300, type: WidthType.DXA }, alignment: AlignmentType.CENTER, visuallyRightToLeft: RTL,
       columnWidths: [4150, 4150], layout: TableLayoutType.FIXED,
       rows: [new TableRow({ children: [stCell, supCell].map((c) => new TableCell({
         width: { size: 4150, type: WidthType.DXA }, borders: noB, margins: { top: 40, bottom: 40, left: 100, right: 100 }, children: c })) })],
@@ -291,7 +296,7 @@ async function buildDocx(data) {
     y += stCell.length * L + 80;
 
     // السنة الجامعية في الفراغ بين زخرفتي الأسفل + الصورة الخلفية
-    const yearTxt = meta.year ? `السنة الجامعية: ${meta.year}` : '';
+    const yearTxt = meta.year ? `${S('yr', 'السنة الجامعية: ')}${meta.year}` : '';
     const before = Math.max(240, FR.yearY - y);
     out.push(T(yearTxt || ' ', 16, { bold: true, color: NAVY, before }));
 
@@ -326,11 +331,11 @@ async function buildDocx(data) {
   const body = [];
   if (opt.toc !== false) {
     body.push(new Paragraph({
-      style: 'Normal', bidirectional: true, alignment: AlignmentType.CENTER, spacing: { after: 240 },
+      style: 'Normal', bidirectional: RTL, alignment: AlignmentType.CENTER, spacing: { after: 240 },
       border: { bottom: { style: BorderStyle.DOUBLE, size: 6, color: GOLD, space: 6 } },
-      children: [run('فهرس المحتويات', { size: SZ + 10, bold: true, color: NAVY })],
+      children: [run(S('toc', 'فهرس المحتويات'), { size: SZ + 10, bold: true, color: NAVY })],
     }));
-    body.push(new TableOfContents('فهرس المحتويات', { hyperlink: true, headingStyleRange: '1-3' }));
+    body.push(new TableOfContents(S('toc', 'فهرس المحتويات'), { hyperlink: true, headingStyleRange: '1-3' }));
     body.push(new Paragraph({ children: [], pageBreakBefore: true }));
   }
   let firstH1 = true;
@@ -341,7 +346,7 @@ async function buildDocx(data) {
     body.push(...bodyParas(n.body, isFramed(n)));
   });
   if (refs.length) {
-    body.push(headingOf({ level: 1, title: 'قائمة المصادر والمراجع' }));
+    body.push(headingOf({ level: 1, title: S('refs', 'قائمة المصادر والمراجع') }));
     refs.forEach((r, i) => body.push(para([run(`${i + 1}. ${r}`)], {
       align: AlignmentType.START, rest: { indent: { left: 567, hanging: 567 } }, after: 100, line: 300 })));
   }
@@ -365,11 +370,11 @@ async function buildDocx(data) {
         properties: { page: { size: A4, margin: { top: 1440, bottom: 1300, left: 1417, right: 1417 },
           pageNumbers: { start: 1 }, borders: mk(frame, NAVY) } },
         headers: { default: new Header({ children: [new Paragraph({
-          bidirectional: true, alignment: AlignmentType.START,
+          bidirectional: RTL, alignment: AlignmentType.START,
           border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: GOLD, space: 4 } },
           children: [run(shortTitle, { size: 20, color: '777777' })] })] }) },
         footers: { default: new Footer({ children: [new Paragraph({
-          bidirectional: true, alignment: AlignmentType.CENTER,
+          bidirectional: RTL, alignment: AlignmentType.CENTER,
           children: [
             new TextRun({ text: '— ', font, color: GOLD, size: 22 }),
             new TextRun({ children: [PageNumber.CURRENT], font, bold: true, color: NAVY, size: 24 }),

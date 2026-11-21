@@ -14,19 +14,34 @@ const MIME = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=u
 // ---------- الذكاء الاصطناعي ----------
 const ai = require('./ai');
 const KEY = ai.enabled;
-const demoPlan = (n, d) => {
-  const names = ['الإطار المفاهيمي والنظري', 'الأحكام والآثار القانونية', 'الإشكالات العملية', 'الضمانات والرقابة', 'آفاق التطوير'];
-  return Array.from({ length: n }, (_, i) => ({ title: names[i] || `محور ${i + 1}`,
-    subs: ['تعريف وتحديد المفاهيم', 'الأساس والخصائص'].map((t) => ({ title: t, subs: d === 3 ? [{ title: 'العنصر الأول' }, { title: 'العنصر الثاني' }] : [] })) }));
+const DEMO_NAMES = {
+  ar: ['الإطار المفاهيمي والنظري', 'الأحكام والآثار القانونية', 'الإشكالات العملية', 'الضمانات والرقابة', 'آفاق التطوير'],
+  fr: ['Cadre conceptuel et théorique', 'Régime et effets juridiques', 'Difficultés pratiques', 'Garanties et contrôle', 'Perspectives'],
+  en: ['Conceptual and theoretical framework', 'Rules and legal effects', 'Practical difficulties', 'Safeguards and oversight', 'Prospects'],
+};
+const DEMO_PARTS = {
+  ar: ['تعريف وتحديد المفاهيم', 'الأساس والخصائص', 'العنصر الأول', 'العنصر الثاني', 'محور'],
+  fr: ['Définition et notions', 'Fondement et caractères', 'Premier élément', 'Second élément', 'Axe'],
+  en: ['Definition and concepts', 'Basis and characteristics', 'First element', 'Second element', 'Axis'],
+};
+const lang3 = (l) => (l === 'fr' || l === 'en' ? l : 'ar');
+const demoPlan = (n, d, lang) => {
+  const L = lang3(lang); const names = DEMO_NAMES[L]; const p = DEMO_PARTS[L];
+  return Array.from({ length: n }, (_, i) => ({ title: names[i] || `${p[4]} ${i + 1}`,
+    subs: [p[0], p[1]].map((t) => ({ title: t, subs: d === 3 ? [{ title: p[2] }, { title: p[3] }] : [] })) }));
 };
 async function plan(b) {
   const r = await ai.plan(b);
   if (r) return r;
-  return { demo: true, chapters: demoPlan(Math.min(Math.max(+b.chapters || 2, 1), 5), +b.depth === 3 ? 3 : 2) };
+  return { demo: true, chapters: demoPlan(Math.min(Math.max(+b.chapters || 2, 1), 5), +b.depth === 3 ? 3 : 2, b.lang) };
 }
 async function write(b) {
   const t = await ai.write(b);
-  return t || `هذا نص تجريبي لعنوان «${b.heading}». أضف مفتاح GEMINI_API_KEY لتشغيل الكتابة بالذكاء الاصطناعي، ثم أعد توليد هذا القسم.`;
+  if (t) return t;
+  const L = lang3(b.lang);
+  if (L === 'fr') return `Ceci est un texte de démonstration pour le titre « ${b.heading} ». Ajoutez la clé GEMINI_API_KEY pour activer la rédaction par l'intelligence artificielle, puis régénérez cette section.`;
+  if (L === 'en') return `This is a demo text for the heading "${b.heading}". Add the GEMINI_API_KEY key to enable AI writing, then regenerate this section.`;
+  return `هذا نص تجريبي لعنوان «${b.heading}». أضف مفتاح GEMINI_API_KEY لتشغيل الكتابة بالذكاء الاصطناعي، ثم أعد توليد هذا القسم.`;
 }
 async function rewrite(b) { return (await ai.rewrite(b)) || b.text; }
 // تلخيص المحاضرات: في الوضع التجريبي يُبنى مخطط بسيط من فقرات النص نفسه
