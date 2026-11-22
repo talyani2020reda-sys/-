@@ -336,6 +336,29 @@ input[type=range]{padding:0;accent-color:var(--gold);height:46px;background:none
 .paper[dir=ltr] .tools,.paper[dir=ltr] .cust{direction:rtl}
 .paper[dir=ltr] .blk.busy::after{left:auto;right:16px}
 .paper[dir=ltr] .body:empty::before{font-family:var(--ui)}
+
+/* ===== محرّر الخطة ===== */
+.pe-back{position:fixed;inset:0;z-index:90;background:rgba(19,32,27,.55);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:18px}
+.pe-back[hidden]{display:none}
+.pe{background:#fff;border-radius:18px;width:min(760px,100%);max-height:92vh;display:flex;flex-direction:column;box-shadow:0 30px 80px rgba(0,0,0,.35);border:1px solid var(--line)}
+.pe-h{padding:20px 26px 14px;border-bottom:1px solid var(--line)}
+.pe-h h3{margin:0;font-size:19px}.pe-h p{margin:4px 0 0;color:var(--muted);font-size:13.5px}
+.pe-list{padding:14px 20px;overflow:auto;flex:1;display:flex;flex-direction:column;gap:7px}
+.pe-row{display:flex;align-items:center;gap:6px;padding-inline-start:calc((var(--lv) - 1) * 28px)}
+.pe-row .lb{flex:none;min-width:78px;font-size:12px;font-weight:800;color:var(--gold-d);background:var(--gold-l);border-radius:8px;padding:4px 8px;text-align:center}
+.pe-row.l1 input{font-weight:800}
+.pe-row.fixed .lb{background:var(--tint-2,#eef2f0);color:var(--muted)}
+.pe-row input{min-height:40px;padding:7px 12px;font-size:14.5px}
+.pe-row button{flex:none;width:34px;height:34px;border-radius:9px;border:1.5px solid var(--line);background:#fff;cursor:pointer;font-size:14px;color:var(--ink-2);font-weight:800;line-height:1}
+.pe-row button:hover:not(:disabled){border-color:var(--gold);background:var(--gold-l)}
+.pe-row button:disabled{opacity:.3;cursor:default}
+.pe-row button.danger:hover:not(:disabled){border-color:#c0392b;background:#fdecea;color:#c0392b}
+.pe-f{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:14px 26px;border-top:1px solid var(--line);background:#fbfcfc;border-radius:0 0 18px 18px}
+.pe-f .sp{flex:1}
+@media(max-width:560px){.pe-row .lb{display:none}.pe-row{padding-inline-start:calc((var(--lv) - 1) * 14px)}}
+.plan-box{margin-top:30px;padding:22px 24px;border:1.5px solid var(--gold);border-radius:16px;background:var(--gold-l)}
+.plan-box[hidden]{display:none}
+.plan-box .pe-row input{background:#fff}
 </style>
 </head>
 <body>
@@ -491,8 +514,19 @@ input[type=range]{padding:0;accent-color:var(--gold);height:46px;background:none
           <label class="ck"><input type="checkbox" id="chapterPageBreak"><span>كل مبحث في صفحة جديدة</span></label>
         </div>
 
+        <div class="plan-box" id="planBox" hidden>
+          <div class="pe-h" style="padding:0 0 12px"><h3>خطة البحث المقترحة</h3><p>عدّل أي عنوان (المباحث والمطالب والفروع)، وحرّكه أو أضف إليه أو احذفه، ثم اعتمد الخطة لتبدأ الكتابة.</p></div>
+          <div class="pe-list" id="fpList" style="padding:0;overflow:visible"></div>
+          <div class="pe-f" style="padding:12px 0 0;border:0;background:none">
+            <button class="btn sm" id="fpAdd" type="button">+ مبحث جديد</button>
+            <span class="sp"></span>
+            <button class="btn" id="fpRegen" type="button">↻ اقتراح خطة أخرى</button>
+            <button class="btn primary" id="fpOk" type="button">اعتماد الخطة والبدء بالكتابة</button>
+          </div>
+        </div>
+
         <div class="actions">
-          <button class="btn primary lg" id="btnPlan"><span>إنشاء الخطة والبدء بالكتابة</span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 12H5m6-6-6 6 6 6"/></svg></button>
+          <button class="btn primary lg" id="btnPlan"><span>إنشاء الخطة</span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 12H5m6-6-6 6 6 6"/></svg></button>
           <span class="hint" id="planHint"></span>
         </div>
       </section>
@@ -510,6 +544,7 @@ input[type=range]{padding:0;accent-color:var(--gold);height:46px;background:none
     <div class="bar">
       <div class="bar-t"><h2>الكتابة في العرض</h2><p id="stats">—</p><p class="tip">اضغط على أي عنوان أو نص واكتب مباشرةً. مرّر المؤشر على القسم لتظهر أدوات الذكاء الاصطناعي.</p></div>
       <div class="bar-a">
+        <button class="btn" id="btnEditPlan">✎ تعديل الخطة</button>
         <button class="btn" id="btnAddChapter">+ إضافة عنوان</button>
         <button class="btn" id="btnWriteAll">✦ كتابة كل الأقسام</button>
         <button class="btn primary" id="btnExport">تصدير إلى Word</button>
@@ -552,6 +587,18 @@ input[type=range]{padding:0;accent-color:var(--gold);height:46px;background:none
 </main>
 
 <footer class="foot"><div class="wrap"><b>رضا بلاتفورم إكسبوزي</b> © <span id="yr"></span> — راجِع المحتوى المولَّد، وتحقّق من المراجع والنصوص القانونية قبل التسليم.</div></footer>
+<div class="pe-back" id="planEd" hidden>
+  <div class="pe" role="dialog" aria-modal="true" aria-labelledby="peT">
+    <div class="pe-h"><h3 id="peT">تعديل خطة البحث</h3><p>غيّر العناوين كما تشاء، وحرّكها، وغيّر مستواها، أو أضف عناوين وأزل غيرها. لن يُطبَّق شيء قبل الضغط على «حفظ الخطة».</p></div>
+    <div class="pe-list" id="peList"></div>
+    <div class="pe-f">
+      <button class="btn sm" id="peAdd" type="button">+ مبحث جديد</button>
+      <span class="sp"></span>
+      <button class="btn" id="peCancel" type="button">إلغاء</button>
+      <button class="btn primary" id="peSave" type="button">حفظ الخطة</button>
+    </div>
+  </div>
+</div>
 <div class="toast" id="toast" role="status"></div>
 <script>/* رضا بلاتفورم إكسبوزي — منطق الواجهة */
 (() => {
@@ -610,7 +657,7 @@ input[type=range]{padding:0;accent-color:var(--gold);height:46px;background:none
 
   const KEY = 'rida.v3';
   const save = () => { try {
-    const o = { frame, color, coverStyle, tfStyle, logo, nodes };
+    const o = { frame, color, coverStyle, tfStyle, logo, nodes, formPlan };
     FIELDS.forEach((f) => (o[f] = $('#' + f).value)); CHECKS.forEach((c) => (o[c] = $('#' + c).checked));
     localStorage.setItem(KEY, JSON.stringify(o)); } catch (e) {} };
   const load = () => { try {
@@ -618,7 +665,7 @@ input[type=range]{padding:0;accent-color:var(--gold);height:46px;background:none
     FIELDS.forEach((f) => { if (o[f] != null) $('#' + f).value = o[f]; });
     CHECKS.forEach((c) => { if (o[c] != null) $('#' + c).checked = !!o[c]; });
     frame = o.frame || frame; color = o.color || color; coverStyle = o.coverStyle || coverStyle; tfStyle = o.tfStyle || tfStyle; logo = o.logo || '';
-    nodes = o.nodes || []; uid = nodes.reduce((m, n) => Math.max(m, n.id), 0); } catch (e) {} };
+    nodes = o.nodes || []; formPlan = o.formPlan || []; uid = nodes.concat(formPlan).reduce((m, n) => Math.max(m, n.id), 0); } catch (e) {} };
 
   // ---------- الترقيم ----------
   function labels() {
@@ -786,28 +833,123 @@ input[type=range]{padding:0;accent-color:var(--gold);height:46px;background:none
 
   // ---------- إنشاء الخطة ----------
   const setStep = (s) => $$('#steps li').forEach((li) => { const k = +li.dataset.s; li.classList.toggle('done', k < s); li.classList.toggle('on', k === s); });
-  $('#btnPlan').onclick = async () => {
-    if (!val('title')) { toast('اكتب عنوان البحث أولًا.', true); $('#title').focus(); return; }
-    if (nodes.length && !confirm('سيُستبدل المحتوى الحالي بخطة جديدة. متابعة؟')) return;
-    const b = $('#btnPlan'); b.disabled = true; $('#planHint').textContent = 'جارٍ وضع الخطة…';
-    try {
-      const r = await (await api('plan', { title: val('title'), field: val('subject'), chapters: +val('chapters'), depth: +val('depth'), system: val('system'), lang: lang() })).json();
-      nodes = [{ id: ++uid, type: 'intro', level: 1, title: S().intro, body: '' }];
-      (r.chapters || []).forEach((c) => {
-        nodes.push({ id: ++uid, type: 'chapter', level: 1, title: c.title, body: '' });
-        (c.subs || []).forEach((s) => {
-          nodes.push({ id: ++uid, type: 'sub', level: 2, title: s.title, body: '' });
-          if (+val('depth') === 3) (s.subs || []).forEach((t) => nodes.push({ id: ++uid, type: 'subsub', level: 3, title: t.title, body: '' }));
-        });
-      });
-      nodes.push({ id: ++uid, type: 'conclusion', level: 1, title: S().concl, body: '' });
-      showWorkspace(); render();
-      toast(r.demo ? 'خطة تجريبية — فعّل مفتاح Gemini للحصول على خطة مخصّصة لموضوعك.' : 'تم إنشاء الخطة. عدّل العناوين واكتب مباشرةً في العرض.');
-      $('#workspace').scrollIntoView();
-    } catch (err) { toast(err.message, true); }
-    b.disabled = false; $('#planHint').textContent = '';
-  };
   function showWorkspace() { $('#workspace').hidden = false; setStep(3); }
+
+  // ---------- تعديل الخطة (محرّر مشترك: داخل الصفحة وفي النافذة) ----------
+  let draft = []; let formPlan = [];
+  const TYPE_BY_LEVEL = { 1: 'chapter', 2: 'sub', 3: 'subsub' };
+  const isFixed = (n) => n.type === 'intro' || n.type === 'conclusion' || n.type === 'free';
+  const subEnd = (arr, i) => { let e = i + 1; while (arr[e] && arr[e].level > arr[i].level && !isFixed(arr[e])) e++; return e; };
+  const subDepth = (arr, i) => { let m = arr[i].level; for (let j = i + 1; j < subEnd(arr, i); j++) m = Math.max(m, arr[j].level); return m - arr[i].level; };
+  function planEditor(listEl, getArr, afterChange) {
+    const render = (focusId) => {
+      const arr = getArr(); const L = lang(); const WD = L === 'ar' ? WORDS : WORDS_L[L]; const w = WD[val('system')] || WD.mabhath; const c = [0, 0, 0];
+      listEl.innerHTML = arr.map((n, i) => {
+        let lb;
+        if (isFixed(n)) lb = n.type === 'intro' ? S().intro : n.type === 'conclusion' ? S().concl : '';
+        else { const l = n.level - 1; c[l]++; for (let k = l + 1; k < 3; k++) c[k] = 0; lb = `${w[l]} ${L === 'ar' ? (ORD[c[l] - 1] || c[l]) : c[l]}`; }
+        const fx = isFixed(n); const prev = arr[i - 1];
+        const canUp = !fx && (() => { for (let j = i - 1; j >= 0; j--) { if (isFixed(arr[j]) || arr[j].level < n.level) return false; if (arr[j].level === n.level) return true; } return false; })();
+        const canDown = !fx && (() => { const e = subEnd(arr, i); return !!arr[e] && arr[e].level === n.level && !isFixed(arr[e]); })();
+        const canOut = !fx && n.level > 1;
+        const canIn = !fx && n.level < 3 && subDepth(arr, i) + n.level < 3 && prev && !isFixed(prev) && prev.level >= n.level;
+        return `<div class="pe-row l${n.level}${fx ? ' fixed' : ''}" style="--lv:${n.level}" data-i="${i}">
+          <span class="lb">${esc(lb)}</span>
+          <input dir="auto" value="${esc(n.title)}" data-id="${n.id}" aria-label="العنوان">
+          <button type="button" data-p="up" title="للأعلى" ${canUp ? '' : 'disabled'}>▲</button>
+          <button type="button" data-p="down" title="للأسفل" ${canDown ? '' : 'disabled'}>▼</button>
+          <button type="button" data-p="out" title="رفع المستوى" ${canOut ? '' : 'disabled'}>⇤</button>
+          <button type="button" data-p="in" title="خفض المستوى (جعله فرعًا لما قبله)" ${canIn ? '' : 'disabled'}>⇥</button>
+          <button type="button" data-p="sub" title="إضافة عنوان فرعي" ${!fx && n.level < 3 ? '' : 'disabled'}>+</button>
+          <button type="button" data-p="del" class="danger" title="حذف" ${fx && n.type !== 'free' ? 'disabled' : ''}>✕</button>
+        </div>`; }).join('');
+      if (focusId) { const el = $(`input[data-id="${focusId}"]`, listEl); if (el) { el.focus(); el.select(); } }
+    };
+    listEl.addEventListener('input', (e) => { const n = getArr().find((x) => x.id === +e.target.dataset.id); if (n) { n.title = e.target.value; afterChange && afterChange(); } });
+    listEl.addEventListener('click', (e) => {
+      const b = e.target.closest('button[data-p]'); if (!b || b.disabled) return;
+      const arr = getArr(); const i = +b.closest('.pe-row').dataset.i; const n = arr[i]; const e1 = subEnd(arr, i); const act = b.dataset.p;
+      if (act === 'up' || act === 'down') {
+        const block = arr.slice(i, e1);
+        if (act === 'down') { const e2 = subEnd(arr, e1); const next = arr.slice(e1, e2); arr.splice(i, e2 - i, ...next, ...block); }
+        else { let j = i - 1; while (arr[j].level > n.level) j--; arr.splice(j, e1 - j, ...block, ...arr.slice(j, i)); }
+        render(n.id);
+      } else if (act === 'in' || act === 'out') {
+        const d = act === 'in' ? 1 : -1;
+        for (let k = i; k < e1; k++) { arr[k].level += d; arr[k].type = TYPE_BY_LEVEL[arr[k].level]; }
+        render(n.id);
+      } else if (act === 'sub') {
+        const nn = { id: ++uid, type: TYPE_BY_LEVEL[n.level + 1], level: n.level + 1, title: S().ntitle, body: '' };
+        arr.splice(e1, 0, nn); render(nn.id);
+      } else if (act === 'del') {
+        const lost = arr.slice(i, e1); const withText = lost.filter((x) => x.body).length;
+        if (lost.length > 1 || withText) if (!confirm(lost.length > 1 ? `سيُحذف هذا العنوان مع ${lost.length - 1} من عناوينه الفرعية${withText ? ' ونصوصها' : ''}. متابعة؟` : 'سيُحذف هذا العنوان مع نصّه. متابعة؟')) return;
+        arr.splice(i, e1 - i); render();
+      }
+      afterChange && afterChange();
+    });
+    const addChapter = () => { const arr = getArr(); const ci = arr.map((n) => n.type).lastIndexOf('conclusion');
+      const nn = { id: ++uid, type: 'chapter', level: 1, title: S().ntitle, body: '' }; arr.splice(ci < 0 ? arr.length : ci, 0, nn); render(nn.id);
+      const el = $(`input[data-id="${nn.id}"]`, listEl); if (el) el.scrollIntoView({ block: 'center' }); afterChange && afterChange(); };
+    return { render, addChapter };
+  }
+  const cleanTitles = (arr) => arr.forEach((n) => { n.title = (n.title || '').replace(/\s+/g, ' ').trim() || S().ntitle; });
+
+  // --- النافذة (التعديل بعد بدء الكتابة) ---
+  const modalEd = planEditor($('#peList'), () => draft);
+  function openPlanEditor() {
+    if (!nodes.length) { toast('أنشئ الخطة أولًا.', true); return; }
+    draft = nodes.map((n) => ({ ...n })); modalEd.render(); $('#planEd').hidden = false;
+    const f = $('#peList input'); if (f) f.focus();
+  }
+  $('#peAdd').onclick = modalEd.addChapter;
+  const closePlanEditor = () => { $('#planEd').hidden = true; draft = []; };
+  $('#peCancel').onclick = closePlanEditor;
+  $('#planEd').addEventListener('mousedown', (e) => { if (e.target.id === 'planEd') closePlanEditor(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('#planEd').hidden) closePlanEditor(); });
+  $('#peSave').onclick = () => {
+    cleanTitles(draft);
+    const kept = new Set(draft.map((n) => n.id));
+    nodes.filter((n) => !kept.has(n.id)).forEach((n) => undo.delete(n.id));
+    nodes = draft; closePlanEditor(); render(); toast('تم حفظ الخطة.');
+  };
+  $('#btnEditPlan').onclick = openPlanEditor;
+
+  // --- داخل الصفحة (مراجعة الخطة بعد إنشائها وقبل الكتابة) ---
+  const formEd = planEditor($('#fpList'), () => formPlan, () => { try { save(); } catch (e) {} });
+  $('#fpAdd').onclick = formEd.addChapter;
+  async function genPlan() {
+    const r = await (await api('plan', { title: val('title'), field: val('subject'), chapters: +val('chapters'), depth: +val('depth'), system: val('system'), lang: lang() })).json();
+    const out = [{ id: ++uid, type: 'intro', level: 1, title: S().intro, body: '' }];
+    (r.chapters || []).forEach((c) => {
+      out.push({ id: ++uid, type: 'chapter', level: 1, title: c.title, body: '' });
+      (c.subs || []).forEach((s) => {
+        out.push({ id: ++uid, type: 'sub', level: 2, title: s.title, body: '' });
+        if (+val('depth') === 3) (s.subs || []).forEach((t) => out.push({ id: ++uid, type: 'subsub', level: 3, title: t.title, body: '' }));
+      });
+    });
+    out.push({ id: ++uid, type: 'conclusion', level: 1, title: S().concl, body: '' });
+    return { list: out, demo: !!r.demo };
+  }
+  async function suggestPlan(btn) {
+    if (!val('title')) { toast('اكتب عنوان البحث أولًا.', true); $('#title').focus(); return; }
+    btn.disabled = true; $('#planHint').textContent = 'جارٍ وضع الخطة…';
+    try {
+      const r = await genPlan(); formPlan = r.list; formEd.render(); $('#planBox').hidden = false;
+      toast(r.demo ? 'خطة تجريبية — فعّل مفتاح Gemini للحصول على خطة مخصّصة لموضوعك.' : 'هذه الخطة المقترحة. عدّل عناوينها كما تشاء ثم اعتمدها.');
+      $('#planBox').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } catch (err) { toast(err.message, true); }
+    btn.disabled = false; $('#planHint').textContent = '';
+  }
+  $('#btnPlan').onclick = (e) => suggestPlan(e.currentTarget);
+  $('#fpRegen').onclick = (e) => { if (confirm('ستُستبدل الخطة الحالية (وتعديلاتك عليها) بخطة جديدة. متابعة؟')) suggestPlan(e.currentTarget); };
+  $('#fpOk').onclick = () => {
+    if (!formPlan.length) return;
+    if (nodes.length && !confirm('سيُستبدل المحتوى الحالي بهذه الخطة. متابعة؟')) return;
+    cleanTitles(formPlan); nodes = formPlan.map((n) => ({ ...n })); showWorkspace(); render();
+    toast('تم اعتماد الخطة. اكتب مباشرةً في العرض، ويمكنك تعديل الخطة من «✎ تعديل الخطة».');
+    $('#workspace').scrollIntoView();
+  };
 
   // ---------- كتابة كل الأقسام ----------
   $('#btnWriteAll').onclick = async () => {
@@ -1055,6 +1197,7 @@ input[type=range]{padding:0;accent-color:var(--gold);height:46px;background:none
   // ---------- بداية التشغيل ----------
   load(); $('#wordsOut').textContent = val('words'); $('#yr').textContent = new Date().getFullYear(); markUi();
   if (nodes.length) showWorkspace();
+  if (formPlan.length) { formEd.render(); $('#planBox').hidden = false; }
   render();
   fetch('/api/health').then((r) => r.json()).then((h) => { const p = $('#aiPill'); p.textContent = h.ai ? 'الذكاء الاصطناعي: مفعّل' : 'وضع تجريبي (بدون مفتاح)'; p.classList.toggle('ok', h.ai); }).catch(() => ($('#aiPill').textContent = 'غير متصل'));
   document.fonts && document.fonts.ready.then(updateLive);
