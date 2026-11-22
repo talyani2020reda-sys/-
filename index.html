@@ -359,6 +359,20 @@ input[type=range]{padding:0;accent-color:var(--gold);height:46px;background:none
 .plan-box{margin-top:30px;padding:22px 24px;border:1.5px solid var(--gold);border-radius:16px;background:var(--gold-l)}
 .plan-box[hidden]{display:none}
 .plan-box .pe-row input{background:#fff}
+.pe-list{gap:2px!important}
+.pe-row{position:relative;padding:3px 0;padding-inline-start:calc((var(--lv) - 1) * 30px);border-radius:10px}
+.pe-row:hover,.pe-row:focus-within{background:rgba(184,146,58,.10)}
+.pe-row.l1:not(.fixed){margin-top:8px}
+.pe-row .lb{background:none!important;color:var(--gold-d);min-width:88px;text-align:start;padding:0;font-size:12.5px}
+.pe-row.fixed .lb{color:var(--muted)}
+.pe-row input{border:0!important;border-bottom:1.5px dashed transparent!important;border-radius:0;background:transparent!important;box-shadow:none!important;min-height:36px;padding:4px 6px;font-size:15.5px}
+.pe-row:hover input{border-bottom-color:var(--line)!important}
+.pe-row input:focus{border-bottom:1.5px solid var(--gold)!important}
+.pe-row button{opacity:0;transition:opacity .12s;width:30px;height:30px;border:0;background:transparent}
+.pe-row:hover button,.pe-row:focus-within button{opacity:1}
+.pe-row button:disabled{display:none}
+@media(hover:none){.pe-row button{opacity:1}}
+.pe-tip{margin:0 0 10px;font-size:13px;color:var(--gold-d);font-weight:700}
 </style>
 </head>
 <body>
@@ -516,6 +530,7 @@ input[type=range]{padding:0;accent-color:var(--gold);height:46px;background:none
 
         <div class="plan-box" id="planBox" hidden>
           <div class="pe-h" style="padding:0 0 12px"><h3>خطة البحث المقترحة</h3><p>عدّل أي عنوان (المباحث والمطالب والفروع)، وحرّكه أو أضف إليه أو احذفه، ثم اعتمد الخطة لتبدأ الكتابة.</p></div>
+          <p class="pe-tip">اضغط على أي عنوان لتعديله · Enter عنوان جديد · Tab يجعله فرعًا · Shift+Tab يرفع مستواه · مرّر على السطر لتظهر أدوات التحريك والحذف</p>
           <div class="pe-list" id="fpList" style="padding:0;overflow:visible"></div>
           <div class="pe-f" style="padding:12px 0 0;border:0;background:none">
             <button class="btn sm" id="fpAdd" type="button">+ مبحث جديد</button>
@@ -590,6 +605,7 @@ input[type=range]{padding:0;accent-color:var(--gold);height:46px;background:none
 <div class="pe-back" id="planEd" hidden>
   <div class="pe" role="dialog" aria-modal="true" aria-labelledby="peT">
     <div class="pe-h"><h3 id="peT">تعديل خطة البحث</h3><p>غيّر العناوين كما تشاء، وحرّكها، وغيّر مستواها، أو أضف عناوين وأزل غيرها. لن يُطبَّق شيء قبل الضغط على «حفظ الخطة».</p></div>
+    <p class="pe-tip" style="padding:10px 26px 0;margin:0">Enter عنوان جديد · Tab يجعله فرعًا · Shift+Tab يرفع مستواه · مرّر على السطر لتظهر الأدوات</p>
     <div class="pe-list" id="peList"></div>
     <div class="pe-f">
       <button class="btn sm" id="peAdd" type="button">+ مبحث جديد</button>
@@ -855,41 +871,58 @@ input[type=range]{padding:0;accent-color:var(--gold);height:46px;background:none
         const canIn = !fx && n.level < 3 && subDepth(arr, i) + n.level < 3 && prev && !isFixed(prev) && prev.level >= n.level;
         return `<div class="pe-row l${n.level}${fx ? ' fixed' : ''}" style="--lv:${n.level}" data-i="${i}">
           <span class="lb">${esc(lb)}</span>
-          <input dir="auto" value="${esc(n.title)}" data-id="${n.id}" aria-label="العنوان">
+          <input dir="auto" value="${esc(n.title)}" data-id="${n.id}" aria-label="العنوان" placeholder="${esc(S().ntitle)}">
           <button type="button" data-p="up" title="للأعلى" ${canUp ? '' : 'disabled'}>▲</button>
           <button type="button" data-p="down" title="للأسفل" ${canDown ? '' : 'disabled'}>▼</button>
-          <button type="button" data-p="out" title="رفع المستوى" ${canOut ? '' : 'disabled'}>⇤</button>
-          <button type="button" data-p="in" title="خفض المستوى (جعله فرعًا لما قبله)" ${canIn ? '' : 'disabled'}>⇥</button>
+          <button type="button" data-p="out" title="رفع المستوى (Shift+Tab)" ${canOut ? '' : 'disabled'}>⇤</button>
+          <button type="button" data-p="in" title="جعله فرعًا لما قبله (Tab)" ${canIn ? '' : 'disabled'}>⇥</button>
           <button type="button" data-p="sub" title="إضافة عنوان فرعي" ${!fx && n.level < 3 ? '' : 'disabled'}>+</button>
           <button type="button" data-p="del" class="danger" title="حذف" ${fx && n.type !== 'free' ? 'disabled' : ''}>✕</button>
         </div>`; }).join('');
       if (focusId) { const el = $(`input[data-id="${focusId}"]`, listEl); if (el) { el.focus(); el.select(); } }
     };
     listEl.addEventListener('input', (e) => { const n = getArr().find((x) => x.id === +e.target.dataset.id); if (n) { n.title = e.target.value; afterChange && afterChange(); } });
-    listEl.addEventListener('click', (e) => {
-      const b = e.target.closest('button[data-p]'); if (!b || b.disabled) return;
-      const arr = getArr(); const i = +b.closest('.pe-row').dataset.i; const n = arr[i]; const e1 = subEnd(arr, i); const act = b.dataset.p;
+    const act = (act, i) => {
+      const arr = getArr(); const n = arr[i]; const e1 = subEnd(arr, i);
+      const can = (k) => { const b = $(`.pe-row[data-i="${i}"] [data-p="${k}"]`, listEl); return b && !b.disabled; };
       if (act === 'up' || act === 'down') {
+        if (!can(act)) return;
         const block = arr.slice(i, e1);
         if (act === 'down') { const e2 = subEnd(arr, e1); const next = arr.slice(e1, e2); arr.splice(i, e2 - i, ...next, ...block); }
         else { let j = i - 1; while (arr[j].level > n.level) j--; arr.splice(j, e1 - j, ...block, ...arr.slice(j, i)); }
         render(n.id);
       } else if (act === 'in' || act === 'out') {
+        if (!can(act)) return;
         const d = act === 'in' ? 1 : -1;
         for (let k = i; k < e1; k++) { arr[k].level += d; arr[k].type = TYPE_BY_LEVEL[arr[k].level]; }
         render(n.id);
       } else if (act === 'sub') {
-        const nn = { id: ++uid, type: TYPE_BY_LEVEL[n.level + 1], level: n.level + 1, title: S().ntitle, body: '' };
+        if (!can('sub')) return;
+        const nn = { id: ++uid, type: TYPE_BY_LEVEL[n.level + 1], level: n.level + 1, title: '', body: '' };
         arr.splice(e1, 0, nn); render(nn.id);
+      } else if (act === 'next') {
+        const nn = { id: ++uid, type: 'chapter', level: 1, title: '', body: '' }; let at;
+        if (n.type === 'intro') at = i + 1; else if (n.type === 'conclusion') at = i; else { nn.level = n.level; nn.type = TYPE_BY_LEVEL[n.level]; at = e1; }
+        arr.splice(at, 0, nn); render(nn.id);
       } else if (act === 'del') {
+        if (isFixed(n) && n.type !== 'free') return;
         const lost = arr.slice(i, e1); const withText = lost.filter((x) => x.body).length;
         if (lost.length > 1 || withText) if (!confirm(lost.length > 1 ? `سيُحذف هذا العنوان مع ${lost.length - 1} من عناوينه الفرعية${withText ? ' ونصوصها' : ''}. متابعة؟` : 'سيُحذف هذا العنوان مع نصّه. متابعة؟')) return;
-        arr.splice(i, e1 - i); render();
+        arr.splice(i, e1 - i); render(arr[Math.max(0, i - 1)] && arr[Math.max(0, i - 1)].id);
       }
       afterChange && afterChange();
+    };
+    listEl.addEventListener('click', (e) => { const b = e.target.closest('button[data-p]'); if (b && !b.disabled) act(b.dataset.p, +b.closest('.pe-row').dataset.i); });
+    listEl.addEventListener('keydown', (e) => {
+      const inp = e.target.closest('input'); if (!inp || e.isComposing) return;
+      const i = +inp.closest('.pe-row').dataset.i; const arr = getArr();
+      if (e.key === 'Enter') { e.preventDefault(); act('next', i); }
+      else if (e.key === 'Tab') { e.preventDefault(); act(e.shiftKey ? 'out' : 'in', i); }
+      else if (e.key === 'Backspace' && !inp.value && !isFixed(arr[i])) { e.preventDefault(); act('del', i); }
+      else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); const t = $$('input', listEl)[i + (e.key === 'ArrowDown' ? 1 : -1)]; if (t) t.focus(); }
     });
     const addChapter = () => { const arr = getArr(); const ci = arr.map((n) => n.type).lastIndexOf('conclusion');
-      const nn = { id: ++uid, type: 'chapter', level: 1, title: S().ntitle, body: '' }; arr.splice(ci < 0 ? arr.length : ci, 0, nn); render(nn.id);
+      const nn = { id: ++uid, type: 'chapter', level: 1, title: '', body: '' }; arr.splice(ci < 0 ? arr.length : ci, 0, nn); render(nn.id);
       const el = $(`input[data-id="${nn.id}"]`, listEl); if (el) el.scrollIntoView({ block: 'center' }); afterChange && afterChange(); };
     return { render, addChapter };
   }
