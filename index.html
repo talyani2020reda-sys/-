@@ -372,6 +372,11 @@ input[type=range]{padding:0;accent-color:var(--gold);height:46px;background:none
 .pe-row:hover button,.pe-row:focus-within button{opacity:1}
 .pe-row button:disabled{display:none}
 @media(hover:none){.pe-row button{opacity:1}}
+.pe-row button,#fpAdd,#peAdd{display:none!important}
+.pe-row:hover,.pe-row:focus-within{background:none!important}
+.pe-row:hover input{border-bottom-color:transparent!important}
+.pe-row input:focus{border-bottom:1.5px solid var(--gold)!important}
+.pe-row input,.pe-row input:focus{outline:none!important;box-shadow:none!important;border-top:0!important;border-left:0!important;border-right:0!important}
 .pe-tip{margin:0 0 10px;font-size:13px;color:var(--gold-d);font-weight:700}
 </style>
 </head>
@@ -529,8 +534,8 @@ input[type=range]{padding:0;accent-color:var(--gold);height:46px;background:none
         </div>
 
         <div class="plan-box" id="planBox" hidden>
-          <div class="pe-h" style="padding:0 0 12px"><h3>خطة البحث المقترحة</h3><p>عدّل أي عنوان (المباحث والمطالب والفروع)، وحرّكه أو أضف إليه أو احذفه، ثم اعتمد الخطة لتبدأ الكتابة.</p></div>
-          <p class="pe-tip">اضغط على أي عنوان لتعديله · Enter عنوان جديد · Tab يجعله فرعًا · Shift+Tab يرفع مستواه · مرّر على السطر لتظهر أدوات التحريك والحذف</p>
+          <div class="pe-h" style="padding:0 0 12px"><h3>خطة البحث المقترحة</h3><p>عدّل عناوين المباحث والمطالب والفروع بالكتابة مباشرةً، ثم اعتمد الخطة لتبدأ الكتابة.</p></div>
+          <p class="pe-tip">اضغط على أي عنوان واكتب لتعديله · Enter عنوان جديد · Tab يجعله فرعًا · Shift+Tab يرفع مستواه · Backspace على عنوان فارغ يحذفه · ↑ ↓ للتنقل</p>
           <div class="pe-list" id="fpList" style="padding:0;overflow:visible"></div>
           <div class="pe-f" style="padding:12px 0 0;border:0;background:none">
             <button class="btn sm" id="fpAdd" type="button">+ مبحث جديد</button>
@@ -605,7 +610,7 @@ input[type=range]{padding:0;accent-color:var(--gold);height:46px;background:none
 <div class="pe-back" id="planEd" hidden>
   <div class="pe" role="dialog" aria-modal="true" aria-labelledby="peT">
     <div class="pe-h"><h3 id="peT">تعديل خطة البحث</h3><p>غيّر العناوين كما تشاء، وحرّكها، وغيّر مستواها، أو أضف عناوين وأزل غيرها. لن يُطبَّق شيء قبل الضغط على «حفظ الخطة».</p></div>
-    <p class="pe-tip" style="padding:10px 26px 0;margin:0">Enter عنوان جديد · Tab يجعله فرعًا · Shift+Tab يرفع مستواه · مرّر على السطر لتظهر الأدوات</p>
+    <p class="pe-tip" style="padding:10px 26px 0;margin:0">اضغط على أي عنوان واكتب لتعديله · Enter عنوان جديد · Tab يجعله فرعًا · Shift+Tab يرفع مستواه · Backspace على عنوان فارغ يحذفه</p>
     <div class="pe-list" id="peList"></div>
     <div class="pe-f">
       <button class="btn sm" id="peAdd" type="button">+ مبحث جديد</button>
